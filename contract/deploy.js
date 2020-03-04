@@ -138,13 +138,16 @@ export default async function deployContract(homeP, { bundleSource, pathResolve 
 
   // Save the instanceId somewhere where the UI can find it.
   if (liquidityOk) {
-    const envFile = pathResolve(`../ui/.env.local`);
-    console.log('writing', envFile);
     const dappConstants = {
       API_URL: "http://127.0.0.1:8000",
       BRIDGE_URL: "http://127.0.0.1:8000",
       CONTRACT_ID: instanceId,
     };
+    const dc = 'dappConstants.js';
+    console.log('writing', 'dappConstants.js');
+    await fs.promises.writeFile(dc, `window.__DAPP_CONSTANTS__ = ${JSON.stringify(dappConstants, undefined, 2)}`);
+    const envFile = pathResolve(`../ui/.env.local`);
+    console.log('writing', envFile);
     const envContents = `\
   REACT_APP_DAPP_CONSTANTS_JSON='${JSON.stringify(dappConstants)}'
 `;
