@@ -136,14 +136,18 @@ export default async function deployContract(homeP, { bundleSource, pathResolve 
   console.log('- instance made', CONTRACT_NAME, '=>', instanceId);
   console.log(liquidityOk);
 
-    // Save the instanceId somewhere where the UI can find it.
+  // Save the instanceId somewhere where the UI can find it.
   if (liquidityOk) {
-    const cjfile = pathResolve(`../ui/src/utils/contractID.js`);
-    console.log('writing', cjfile);
-    await fs.promises.writeFile(cjfile, `export default ${JSON.stringify(instanceId)};`);
-
-    // =====================
-    // === AWAITING TURN ===
-    // =====================
+    const envFile = pathResolve(`../ui/.env.local`);
+    console.log('writing', envFile);
+    const dappConstants = {
+      API_URL: "http://127.0.0.1:8000",
+      BRIDGE_URL: "http://127.0.0.1:8000",
+      CONTRACT_ID: instanceId,
+    };
+    const envContents = `\
+  REACT_APP_DAPP_CONSTANTS_JSON='${JSON.stringify(dappConstants)}'
+`;
+    await fs.promises.writeFile(envFile, envContents);
   }
 }

@@ -22,8 +22,9 @@ import {
   swapInputs,
   createOffer,
 } from '../store/actions';
+import dappConstants from '../utils/constants';
 
-import { CONTRACT_ID } from '../utils/constants';
+const { CONTRACT_ID } = dappConstants;
 
 const useStyles = makeStyles(theme => ({
   paper: {
