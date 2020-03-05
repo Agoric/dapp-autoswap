@@ -12,7 +12,18 @@ function checkOrder(a0, a1, b0, b1) {
   throw new TypeError('Canot resolve asset ordering');
 }
 
-export default harden(({zoe, registrar}, _inviteMaker) => {
+export default harden(({zoe, registrar, overrideInstanceId = undefined}, _inviteMaker) => {
+  // If we have an overrideInstanceId, use it to assert the correct value in the RPC.
+  function coerceInstanceId(instanceId = undefined) {
+    if (instanceId === undefined) {
+      return overrideInstanceId;
+    }
+    if (overrideInstanceId === undefined || instanceId === overrideInstanceId) {
+      return instanceId;
+    }
+    throw TypeError(`instanceId ${JSON.stringify(instanceId)} must match ${JSON.stringify(overrideInstanceId)}`);
+  }
+
   const registrarPCache = new Map();
   function getRegistrarP(id) {
     let regP = registrarPCache.get(id);
@@ -131,8 +142,9 @@ export default harden(({zoe, registrar}, _inviteMaker) => {
           switch (type) {
             case 'autoswapGetPrice': {
               const { instanceId, extent0, assayId0, assayId1 } = data;
+              const id = coerceInstanceId(instanceId);
               const extent = await getPrice(
-                instanceId,
+                id,
                 extent0,
                 assayId0,
                 assayId1,
@@ -142,8 +154,9 @@ export default harden(({zoe, registrar}, _inviteMaker) => {
   
             case 'autoswapGetOfferRules': {
               const { instanceId, extent0, assayId0, assayId1 } = data;
+              const id = coerceInstanceId(instanceId);
               const offerRules = await getOfferRules(
-                instanceId,
+                id,
                 extent0,
                 assayId0,
                 assayId1,

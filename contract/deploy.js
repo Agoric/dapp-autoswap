@@ -145,7 +145,7 @@ export default async function deployContract(homeP, { bundleSource, pathResolve 
     };
     const dc = 'dappConstants.js';
     console.log('writing', 'dappConstants.js');
-    await fs.promises.writeFile(dc, `window.__DAPP_CONSTANTS__ = ${JSON.stringify(dappConstants, undefined, 2)}`);
+    await fs.promises.writeFile(dc, `globalThis.__DAPP_CONSTANTS__ = ${JSON.stringify(dappConstants, undefined, 2)}`);
     const envFile = pathResolve(`../ui/.env.local`);
     console.log('writing', envFile);
     const envContents = `\
