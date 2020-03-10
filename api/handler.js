@@ -52,66 +52,65 @@ export default harden(({zoe, registrar, overrideInstanceId = undefined}, _invite
     let liquidityIdP = liquidityIdPCache.get(instanceId);
     if (!liquidityIdP) {
       liquidityIdP = getInstanceP(instanceId)
-        .then(({ publicAPI }) => E(publicAPI).getLiquidityAssay())
-        .then(liquidityAssay => E(registrar).register('autoswap-liquidity', liquidityAssay));
+        .then(({ publicAPI }) => E(publicAPI).getLiquidityIssuer())
+        .then(liquidityIssuer => E(registrar).register('autoswap-liquidity', liquidityIssuer));
       liquidityIdPCache.set(instanceId, liquidityIdP);
     }
     return liquidityIdP;
   }
 
-  const labelPCache = new Map();
-  function getLabelP(id) {
-    let labelP = labelPCache.get(id);
-    if (!labelP) {
-      const regAssayP = getRegistrarP(id);
-      labelP = E(regAssayP).getLabel();
-      labelPCache.set(id, labelP);
+  const amountMathPCache = new Map();
+  function getAmountMathP(id) {
+    let amountMathP = amountMathPCache.get(id);
+    if (!amountMathP) {
+      const regIssuerP = getRegistrarP(id);
+      amountMathP = E(regIssuerP).getAmountMath();
+      amountMathPCache.set(id, amountMathP);
     }
-    return labelP;
+    return amountMathP;
   }
 
-  function getPrice(instanceId, extent0, assayId0, _assayId1) {
+  function getPrice(instanceId, extent0, issuerId0, _issuerId1) {
     const instanceP = getInstanceP(instanceId);
-    const label0P = getLabelP(assayId0);
+    const amountMath0P = getAmountMathP(issuerId0);
 
-    return Promise.all([instanceP, label0P]).then(
-      ([{ publicAPI }, label0]) => {
-        const unit0 = harden({ label: label0, extent: extent0 });
+    return Promise.all([instanceP, amountMath0P]).then(
+      ([{ publicAPI }, amountMath0]) => {
 
-        return E(publicAPI)
-          .getPrice(unit0)
-          .then(unit1 => unit1.extent);
+        return E(amountMath0).make(extent0)
+          .then(amount0 => E(publicAPI).getPrice(amount0))
+          .then(amount1 => amount1.extent);
       });
   }
 
-  function getOfferRules(instanceId, extent0, assayId0, assayId1) {
+  function getOfferRules(instanceId, extent0, issuerId0, issuerId1) {
     const instanceP = getInstanceP(instanceId);
-    const regAssay0P = getRegistrarP(assayId0);
-    const regAssay1P = getRegistrarP(assayId1);
+    const regIssuer0P = getRegistrarP(issuerId0);
+    const regIssuer1P = getRegistrarP(issuerId1);
     const liquidityIdP = getLiquidityId(instanceId);
 
-    return Promise.all([instanceP, regAssay0P, regAssay1P, liquidityIdP]).then(
+    return Promise.all([instanceP, regIssuer0P, regIssuer1P, liquidityIdP]).then(
       ([{ terms: {
-        assays: [contractAssay0, contractAssay1],
-      }}, regAssay0, regAssay1, liquidityId]) => {
-        // Check whether we sell on contract assay 0 or 1.
+        issuers: [contractIssuer0, contractIssuer1],
+      }}, regIssuer0, regIssuer1, liquidityId]) => {
+        // Check whether we sell on contract issuer 0 or 1.
         const normal = checkOrder(
-          regAssay0,
-          regAssay1,
-          contractAssay0,
-          contractAssay1,
+          regIssuer0,
+          regIssuer1,
+          contractIssuer0,
+          contractIssuer1,
         );
 
         // Construct the rules for serialization (no instance).
         // This rule is the payment
         const payinRule = {
           kind: 'offerAtMost',
-          units: { assayId: assayId0, extent: extent0 },
+          amount: { issuerId: issuerId0, extent: extent0 },
         };
         // This rule is the payout
         const payoutRule = {
           kind: 'wantAtLeast',
-          units: { assayId: assayId1 },
+          amount: { issuerId: issuerId1 },
         };
 
         // Order the rules accordingly.
@@ -121,7 +120,7 @@ export default harden(({zoe, registrar, overrideInstanceId = undefined}, _invite
             normal ? payoutRule : payinRule,
             {
               kind: 'wantAtLeast',
-              units: { assayId: liquidityId },
+              amount: { issuerId: liquidityId },
             },
           ],
           exitRule: {
@@ -141,25 +140,25 @@ export default harden(({zoe, registrar, overrideInstanceId = undefined}, _invite
           const { type, data } = obj;
           switch (type) {
             case 'autoswapGetPrice': {
-              const { instanceId, extent0, assayId0, assayId1 } = data;
+              const { instanceId, extent0, issuerId0, issuerId1 } = data;
               const id = coerceInstanceId(instanceId);
               const extent = await getPrice(
                 id,
                 extent0,
-                assayId0,
-                assayId1,
+                issuerId0,
+                issuerId1,
               );
               return { type: 'autoswapPrice', data: extent };
             }
   
             case 'autoswapGetOfferRules': {
-              const { instanceId, extent0, assayId0, assayId1 } = data;
+              const { instanceId, extent0, issuerId0, issuerId1 } = data;
               const id = coerceInstanceId(instanceId);
               const offerRules = await getOfferRules(
                 id,
                 extent0,
-                assayId0,
-                assayId1,
+                issuerId0,
+                issuerId1,
               );
               return { type: 'autoswapOfferRules', data: offerRules };
             }

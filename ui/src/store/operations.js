@@ -77,8 +77,8 @@ export function createOffer(
     extent1: outputAmount,
     purseName0: inputPurse.purseName,
     purseName1: outputPurse.purseName,
-    assayId0: inputPurse.assayId,
-    assayId1: outputPurse.assayId,
+    issuerId0: inputPurse.issuerRegKey,
+    issuerId1: outputPurse.issuerRegKey,
   };
   doFetch({
     type: 'autoswapGetOfferRules',

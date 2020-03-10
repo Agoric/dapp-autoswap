@@ -67,10 +67,10 @@ export default function Swap() {
   } = state;
 
   // const purses = [
-  //   { name: 'Marketing', extent: 230, description: 'simolean' },
-  //   { name: 'Operating Account', extent: 194, description: 'moola ' },
-  //   { name: 'Savings', extent: 3500, description: 'moola ' },
-  //   { name: 'Concert Tickets', extent: 64, description: 'tickets' },
+  //   { name: 'Marketing', extent: 230, issuerPetname: 'simolean' },
+  //   { name: 'Operating Account', extent: 194, issuerPetname: 'moola ' },
+  //   { name: 'Savings', extent: 3500, issuerPetname: 'moola ' },
+  //   { name: 'Concert Tickets', extent: 64, issuerPetname: 'tickets' },
   // ];
 
   const inputAmountError =
@@ -80,7 +80,7 @@ export default function Swap() {
   const pursesError =
     inputPurse &&
     outputPurse &&
-    inputPurse.allegedName === outputPurse.allegedName;
+    inputPurse.issuerPetname === outputPurse.issuerPetname;
 
   const hasError = pursesError || inputAmountError || outputAmountError;
 
@@ -122,7 +122,7 @@ export default function Swap() {
   function getExchangeRate(decimal) {
     if (isValid) {
       const exchangeRate = (outputAmount / inputAmount).toFixed(decimal);
-      return `Exchange rate: 1 ${inputPurse.assayId} = ${exchangeRate} ${outputPurse.assayId}`;
+      return `Exchange rate: 1 ${inputPurse.issuerPetname} = ${exchangeRate} ${outputPurse.issuerPetname}`;
     }
     return '';
   }

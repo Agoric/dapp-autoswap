@@ -2,6 +2,7 @@
 import fs from 'fs';
 
 import harden from '@agoric/harden';
+import makeAmountMath from '@agoric/ertp/src/amountMath';
 
 // This javascript source file uses the "tildot" syntax (foo~.bar()) for
 // eventual sends. Tildot is standards track with TC39, the JavaScript standards
@@ -26,26 +27,38 @@ export default async function deployContract(homeP, { bundleSource, pathResolve 
   // === AWAITING TURN ===
   // =====================
 
-  // 1. Assays and payments
-  const purse0P = homeP~.wallet~.getPurse('moola');
-  const purse1P = homeP~.wallet~.getPurse('simolean');
-  const assay0P = purse0P~.getAssay();
-  const assay1P = purse1P~.getAssay();
-  const payment0P = purse0P~.withdraw(900);
-  const payment1P = purse1P~.withdraw(900);
+  // 1. Issuers and payments
+  const purse0P = homeP~.wallet~.getPurse('moola purse');
+  const purse1P = homeP~.wallet~.getPurse('simolean purse');
+  const issuer0P = homeP~.wallet~.getPurseIssuer('moola purse');
+  const issuer1P = homeP~.wallet~.getPurseIssuer('simolean purse');
+
+  const getLocalAmountMath = issuer =>
+    Promise.all([
+      issuer~.getBrand(),
+      issuer~.getMathHelpersName(),
+  ]).then(([brand, mathHelpersName]) => makeAmountMath(brand, mathHelpersName));
+
+  const amountMath0P = getLocalAmountMath(issuer0P);
+  const amountMath1P = getLocalAmountMath(issuer1P);
+  const withdrawAmount = (amountMath, purse, extent) =>
+    amountMath.then(am => purse~.withdraw(am.make(extent)));
+
+  const payment0P = withdrawAmount(amountMath0P, purse0P, 900);
+  const payment1P = withdrawAmount(amountMath1P, purse1P, 900);
 
   const [
-    purse0,
-    purse1,
-    assay0,
-    assay1,
+    issuer0,
+    issuer1,
+    amountMath0,
+    amountMath1,
     payment0,
     payment1
   ] = await Promise.all([
-    purse0P,
-    purse1P,
-    assay0P,
-    assay1P,
+    issuer0P,
+    issuer1P,
+    amountMath0P,
+    amountMath1P,
     payment0P,
     payment1P
   ]);
@@ -55,8 +68,13 @@ export default async function deployContract(homeP, { bundleSource, pathResolve 
   // =====================
 
   // 2. Contract instance.
-  const invite
-    = await homeP~.zoe~.makeInstance(installationHandle, { assays: [assay0, assay1] });
+  const [
+    invite,
+    inviteIssuer,
+  ] = await Promise.all([
+    homeP~.zoe~.makeInstance(installationHandle, { issuers: [issuer0, issuer1] }),
+    homeP~.zoe~.getInviteIssuer(),
+  ])
 
   // =====================
   // === AWAITING TURN ===
@@ -65,16 +83,16 @@ export default async function deployContract(homeP, { bundleSource, pathResolve 
   // 3. Get the instanceHandle
 
   const {
-    extent: { instanceHandle },
-  } = await invite~.getBalance();
+    extent: [{ instanceHandle }],
+  } = await inviteIssuer~.getAmountOf(invite);
 
   // =====================
   // === AWAITING TURN ===
   // =====================
 
-  // 4. Get the contract terms and assays
+  // 4. Get the contract terms and issuers
 
-  const { terms: { assays }} = await homeP~.zoe~.getInstance(instanceHandle);
+  const { terms: { issuers }} = await homeP~.zoe~.getInstance(instanceHandle);
 
 
   // =====================
@@ -82,11 +100,7 @@ export default async function deployContract(homeP, { bundleSource, pathResolve 
   // =====================
 
   // 5. Offer rules
-  const [unit0, unit1, unit2] = await Promise.all([
-    assays~.[0]~.makeUnits(900),
-    assays~.[1]~.makeUnits(900),
-    assays~.[2]~.makeUnits(0),
-  ]);
+  const amountMath2 = await getLocalAmountMath(issuers[2])
 
   // =====================
   // === AWAITING TURN ===
@@ -96,15 +110,15 @@ export default async function deployContract(homeP, { bundleSource, pathResolve 
     payoutRules: [
       {
         kind: 'offerAtMost',
-        units: unit0,
+        amount: amountMath0.make(900),
       },
       {
         kind: 'offerAtMost',
-        units: unit1,
+        amount: amountMath1.make(900),
       },
       {
         kind: 'wantAtLeast',
-        units: unit2,
+        amount: amountMath2.getEmpty(),
       },
     ],
     exitRule: {
@@ -139,13 +153,17 @@ export default async function deployContract(homeP, { bundleSource, pathResolve 
   // Save the instanceId somewhere where the UI can find it.
   if (liquidityOk) {
     const dappConstants = {
-      API_URL: "http://127.0.0.1:8000",
-      BRIDGE_URL: "http://127.0.0.1:8000",
+      BRIDGE_URL: 'agoric-lookup:https://local.agoric.com?append=/bridge',
+      API_URL: '/',
       CONTRACT_ID: instanceId,
     };
     const dc = 'dappConstants.js';
     console.log('writing', 'dappConstants.js');
     await fs.promises.writeFile(dc, `globalThis.__DAPP_CONSTANTS__ = ${JSON.stringify(dappConstants, undefined, 2)}`);
+
+    // Now add URLs so that development functions without internet access.
+    dappConstants.BRIDGE_URL = "http://127.0.0.1:8000";
+    dappConstants.API_URL = "http://127.0.0.1:8000";
     const envFile = pathResolve(`../ui/.env.local`);
     console.log('writing', envFile);
     const envContents = `\
