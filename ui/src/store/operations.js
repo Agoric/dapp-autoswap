@@ -70,35 +70,41 @@ export function createOffer(
   state,
   { instanceId, inputAmount, outputAmount, inputPurse, outputPurse },
 ) {
-  const meta = {
-    instanceId,
-    date: Date.now(),
-    extent0: inputAmount,
-    extent1: outputAmount,
-    purseName0: inputPurse.purseName,
-    purseName1: outputPurse.purseName,
-    issuerId0: inputPurse.issuerRegKey,
-    issuerId1: outputPurse.issuerRegKey,
-  };
-  doFetch({
-    type: 'autoswapGetOfferRules',
-    data: meta,
-  }).then(response => {
-    const { type, data } = response;
-    if (type === 'autoswapOfferRules') {
-      return doFetch(
-        {
-          type: 'walletAddOffer',
-          data: {
-            meta,
-            offerRules: data,
-          },
+  const offerDesc = {
+    id: Date.now(),
+
+    // Contract-specific metadata.
+    instanceRegKey: instanceId,
+    contractIssuerIndexToRole: ['TokenA', 'TokenB', 'Liquidity'],
+    instanceInviteHook: ['makeInvite'], // E(publicAPI).makeInvite()
+    instanceAcceptedHook: undefined, // Could be E(publicAPI)...
+    seatTriggerHook: ['swap'], // E(seat).swap()
+
+    offerRulesTemplate: {
+      offer: {
+        $InputToken: {
+          pursePetname: inputPurse.pursePetname,
+          extent: inputAmount,
         },
-        true,
-      );
-    }
-    return null;
-  });
+      },
+      want: {
+        $OutputToken: {
+          pursePetname: outputPurse.pursePetname,
+          extent: outputAmount,
+        },
+      },
+      exit: { onDemand: {} },
+    },
+  };
+
+  // Actually make the offer.
+  doFetch(
+    {
+      type: 'walletAddOffer',
+      data: offerDesc,
+    },
+    true,
+  );
 
   return {
     ...state,

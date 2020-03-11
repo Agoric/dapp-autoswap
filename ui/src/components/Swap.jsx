@@ -94,8 +94,8 @@ export default function Swap() {
   function handleChangePurse(event, fieldNumber) {
     if (!purses) return;
 
-    const purseName = event.target.value;
-    const purse = purses.find(p => p.purseName === purseName);
+    const pursePetname = event.target.value;
+    const purse = purses.find(p => p.pursePetname === pursePetname);
 
     let freeVariable = null;
     if (inputAmount > 0 && outputAmount > 0) {

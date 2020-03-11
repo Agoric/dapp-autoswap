@@ -84,8 +84,8 @@ export default function Provider({ children }) {
         data: {
           instanceId: CONTRACT_ID,
           extent0: inputAmount,
-          issuerId0: inputPurse.issuerRegKey,
-          issuerId1: outputPurse.issuerRegKey,
+          brandRegKey0: inputPurse.brandRegKey,
+          brandRegKey1: outputPurse.brandRegKey,
         },
       }).then(messageHandler);
     }
@@ -96,8 +96,8 @@ export default function Provider({ children }) {
         data: {
           instanceId: CONTRACT_ID,
           extent0: outputAmount,
-          issuerId0: outputPurse.issuerRegKey,
-          issuerId1: inputPurse.issuerRegKey,
+          brandRegKey0: outputPurse.brandRegKey,
+          brandRegKey1: inputPurse.brandRegKey,
         },
       }).then(messageHandler);
     }

@@ -82,7 +82,7 @@ export default function AssetInput({
           label="Currency"
           variant="outlined"
           fullWidth
-          value={purse === null ? '' : purse.purseName}
+          value={purse === null ? '' : purse.pursePetname}
           onChange={onPurseChange}
           inputProps={{
             className: clsx(purse && classes.noPadding, classes.select),
@@ -91,13 +91,13 @@ export default function AssetInput({
           error={purseError}
         >
           {Array.isArray(purses) && purses.length > 0 ? (
-            purses.map(({ purseName, issuerPetname, extent }) => (
-              <MenuItem key={purseName} value={purseName} divider>
+            purses.map(({ pursePetname, issuerPetname, extent }) => (
+              <MenuItem key={pursePetname} value={pursePetname} divider>
                 <ListItemIcon className={classes.icon}>
                   <PurseIcon />
                 </ListItemIcon>
                 <ListItemText
-                  primary={purseName}
+                  primary={pursePetname}
                   secondary={`${extent} ${issuerPetname}`}
                 />
               </MenuItem>
