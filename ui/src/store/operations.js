@@ -76,13 +76,27 @@ export function createOffer(
     // Contract-specific metadata.
     instanceRegKey: instanceId,
     contractIssuerIndexToRole: ['TokenA', 'TokenB', 'Liquidity'],
-    instanceInviteHook: ['makeInvite'], // E(publicAPI).makeInvite()
-    instanceAcceptedHook: undefined, // Could be E(publicAPI)...
-    seatTriggerHook: ['swap'], // E(seat).swap()
+
+    // Format is:
+    //   hooks[targetName][hookName] = [hookMethod, ...hookArgs].
+    // Then is called within the wallet as:
+    //   E(target)[hookMethod](...hookArgs)
+    hooks: {
+      publicAPI: {
+        getInvite: ['makeInvite'], // E(publicAPI).makeInvite()
+        offerAccepted: undefined, // Could be E(publicAPI)...
+      },
+      seat: {
+        performOffer: ['swap'], // E(seat).swap()
+      }
+    },
 
     offerRulesTemplate: {
       offer: {
+        // Roles that begin with $ are placeholders that say to use
+        // the first role that matches the purse's brand.
         $InputToken: {
+          // The pursePetname identifies which purse we want to use
           pursePetname: inputPurse.pursePetname,
           extent: inputAmount,
         },
