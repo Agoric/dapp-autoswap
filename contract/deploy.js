@@ -14,6 +14,8 @@ const DAPP_NAME = "dapp-autoswap";
 export default async function deployContract(homeP, { bundleSource, pathResolve },
   CONTRACT_NAME = 'autoswap') {
 
+  const wallet = homeP~.wallet;
+
   // Create a source bundle for the "myFirstDapp" smart contract.
   const { source, moduleFormat } = await bundleSource(pathResolve(`./${CONTRACT_NAME}.js`));
 
@@ -28,10 +30,9 @@ export default async function deployContract(homeP, { bundleSource, pathResolve 
   // =====================
 
   // 1. Issuers and payments
-  const purse0P = homeP~.wallet~.getPurse('moola purse');
-  const purse1P = homeP~.wallet~.getPurse('simolean purse');
-  const issuer0P = homeP~.wallet~.getPurseIssuer('moola purse');
-  const issuer1P = homeP~.wallet~.getPurseIssuer('simolean purse');
+  const [[pursePetname0, purse0], [pursePetname1, purse1]] = await wallet~.getPurses();
+  const issuer0P = wallet~.getPurseIssuer(pursePetname0);
+  const issuer1P = wallet~.getPurseIssuer(pursePetname1);
 
   const getLocalAmountMath = issuer =>
     Promise.all([
@@ -44,8 +45,10 @@ export default async function deployContract(homeP, { bundleSource, pathResolve 
   const withdrawAmount = (amountMath, purse, extent) =>
     amountMath.then(am => purse~.withdraw(am.make(extent)));
 
-  const payment0P = withdrawAmount(amountMath0P, purse0P, 900);
-  const payment1P = withdrawAmount(amountMath1P, purse1P, 900);
+  const extent0 = 900;
+  const extent1 = 500;
+  const payment0P = withdrawAmount(amountMath0P, purse0, extent0);
+  const payment1P = withdrawAmount(amountMath1P, purse1, extent1);
 
   const [
     issuer0,
@@ -110,11 +113,11 @@ export default async function deployContract(homeP, { bundleSource, pathResolve 
     payoutRules: [
       {
         kind: 'offerAtMost',
-        amount: amountMath0.make(900),
+        amount: amountMath0.make(extent0),
       },
       {
         kind: 'offerAtMost',
-        amount: amountMath1.make(900),
+        amount: amountMath1.make(extent1),
       },
       {
         kind: 'wantAtLeast',
