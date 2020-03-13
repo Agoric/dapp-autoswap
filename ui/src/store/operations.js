@@ -71,6 +71,8 @@ export function createOffer(
   { instanceId, inputAmount, outputAmount, inputPurse, outputPurse },
 ) {
   const offerDesc = {
+    // JSONable ID for this offer.  Eventually this will be scoped to
+    // the current site.
     id: Date.now(),
 
     // Contract-specific metadata.
@@ -93,16 +95,19 @@ export function createOffer(
 
     offerRulesTemplate: {
       offer: {
-        // Roles that begin with $ are placeholders that say to use
-        // the first role that matches the purse's brand.
-        $InputToken: {
+        // Roles that end with '*' are "multiroles".  These names
+        // match a role with that prefix and this purse's brand.
+        //
+        // If there is no match (or ambiguity), the wallet offer
+        // compiler will throw with an informative message.
+        'Token*': {
           // The pursePetname identifies which purse we want to use
           pursePetname: inputPurse.pursePetname,
           extent: inputAmount,
         },
       },
       want: {
-        $OutputToken: {
+        'Token*': {
           pursePetname: outputPurse.pursePetname,
           extent: outputAmount,
         },

@@ -149,7 +149,7 @@ export default async function deployContract(homeP, { bundleSource, pathResolve 
   // === AWAITING TURN ===
   // =====================
 
-  console.log('- installation made', CONTRACT_NAME, '=>',  installationHandle);
+  console.log('- installation made', CONTRACT_NAME, '=>',  contractId);
   console.log('- instance made', CONTRACT_NAME, '=>', instanceId);
   console.log(liquidityOk);
 
