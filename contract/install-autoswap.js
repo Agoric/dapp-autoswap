@@ -6,7 +6,7 @@ import harden from '@agoric/harden';
 // uses them to add liquidity.
 export default harden(({ wallet, zoe, registrar }) => {
   return harden({
-    async initInstance(contractName, { source, moduleFormat }) {
+    async initInstance(contractName, { source, moduleFormat }, now = Date.now()) {
       const installationHandle = await zoe~.install(source, moduleFormat);
 
       // =====================
@@ -54,7 +54,7 @@ export default harden(({ wallet, zoe, registrar }) => {
       const extent1 = 500;
     
       const offerDesc = {
-        id: Date.now(),
+        id: now,
     
         // Contract-specific metadata.
         instanceRegKey: instanceId,
@@ -98,7 +98,7 @@ export default harden(({ wallet, zoe, registrar }) => {
       });
 
       // Use the wallet's offer system to finish the deployment.
-      const requestContext = { origin: 'autoswap deploy', date: Date.now() };
+      const requestContext = { origin: 'autoswap deploy', date: now };
       await wallet~.addOffer(offerDesc, hooks, requestContext);
       wallet~.acceptOffer(offerDesc.id);
 

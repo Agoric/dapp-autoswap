@@ -27,7 +27,7 @@ export default async function deployContract(homeP, { bundleSource, pathResolve 
   const installerInstall = homeP~.spawner~.install(source, moduleFormat);
   const installer = installerInstall~.spawn({ wallet, zoe, registrar });
 
-  const { instanceId } = await installer~.initInstance(CONTRACT_NAME, contractBundle);
+  const { instanceId } = await installer~.initInstance(CONTRACT_NAME, contractBundle, Date.now());
 
   console.log('- instance made', CONTRACT_NAME, '=>', instanceId);
 

@@ -63,7 +63,7 @@ export default harden(({zoe, registrar, overrideInstanceId = undefined}, _invite
                 brandRegKey0,
                 brandRegKey1,
               );
-              return { type: 'autoswapPrice', data: extent };
+              return { type: 'autoswapGetPriceResponse', data: extent };
             }
 
             default: {

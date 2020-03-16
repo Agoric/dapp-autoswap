@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useCallback, useReducer, useEffect } from 'react';
 
 import {
   activateWebSocket,
@@ -49,35 +49,50 @@ export default function Provider({ children }) {
       return doFetch({ type: 'walletGetPurses' }).then(messageHandler);
     }
 
+    activateWebSocket({
+      onConnect() {
+        dispatch(serverConnected());
+        walletGetPurses();
+      },
+      onDisconnect() {
+        dispatch(serverDisconnected());
+        dispatch(deactivateConnection());
+        dispatch(resetState());
+      },
+      onMessage(data) {
+        messageHandler(JSON.parse(data));
+      },
+    });
+    return deactivateWebSocket;
+  }, []);
+
+  const apiMessageHandler = useCallback((message) => {
+    if (!message) return;
+    const { type, data } = message;
+    if (type === 'autoswapGetPriceResponse') {
+      dispatch(changeAmount(data, 1 - freeVariable));
+    }
+  }, [freeVariable]);
+
+  useEffect(() => {
     if (active) {
       activateWebSocket({
         onConnect() {
-          dispatch(serverConnected());
-          walletGetPurses();
+          console.log('connected to API');
         },
         onDisconnect() {
-          dispatch(serverDisconnected());
-          dispatch(deactivateConnection());
-          dispatch(resetState());
+          console.log('disconnected from API');
         },
         onMessage(message) {
-          messageHandler(JSON.parse(message));
+          apiMessageHandler(JSON.parse(message));
         },
-      });
+      }, '/api');
     } else {
-      deactivateWebSocket();
+      deactivateWebSocket('/api');
     }
-  }, [active]);
+  }, [active, apiMessageHandler]);
 
   useEffect(() => {
-    function messageHandler(message) {
-      if (!message) return;
-      const { type, data } = message;
-      if (type === 'autoswapPrice') {
-        dispatch(changeAmount(data, 1 - freeVariable));
-      }
-    }
-
     if (inputPurse && outputPurse && freeVariable === 0 && inputAmount > 0) {
       doFetch({
         type: 'autoswapGetPrice',
@@ -88,7 +103,7 @@ export default function Provider({ children }) {
           brandRegKey1: outputPurse.brandRegKey,
         },
       },
-      true).then(messageHandler);
+      '/api').then(apiMessageHandler);
     }
 
     if (inputPurse && outputPurse && freeVariable === 1 && outputAmount > 0) {
@@ -100,9 +115,10 @@ export default function Provider({ children }) {
           brandRegKey0: outputPurse.brandRegKey,
           brandRegKey1: inputPurse.brandRegKey,
         },
-      }).then(messageHandler);
+      },
+      '/api').then(apiMessageHandler);
     }
-  }, [inputPurse, outputPurse, inputAmount, outputAmount, freeVariable]);
+  }, [inputPurse, outputPurse, inputAmount, outputAmount, apiMessageHandler, freeVariable]);
 
   return (
     <ApplicationContext.Provider value={{ state, dispatch }}>
