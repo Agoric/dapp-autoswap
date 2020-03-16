@@ -4,8 +4,6 @@ import dappConstants from './constants';
 
 const { API_URL, BRIDGE_URL } = dappConstants;
 
-// FIXME: Implement the https://local.agoric.com bridge.
-
 // === WEB SOCKET
 
 const endpointToSocket = new Map();

@@ -99,8 +99,8 @@ export default harden(({ wallet, zoe, registrar }) => {
 
       // Use the wallet's offer system to finish the deployment.
       const requestContext = { origin: 'autoswap deploy', date: now };
-      await wallet~.addOffer(offerDesc, hooks, requestContext);
-      wallet~.acceptOffer(offerDesc.id);
+      const id = await wallet~.addOffer(offerDesc, hooks, requestContext);
+      wallet~.acceptOffer(id);
 
       return acceptedP;
     },
