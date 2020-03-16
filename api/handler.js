@@ -35,18 +35,6 @@ export default harden(({zoe, registrar, overrideInstanceId = undefined}, _invite
     return instanceP;
   }
 
-  const liquidityIdPCache = new Map();
-  function getLiquidityId(instanceId) {
-    let liquidityIdP = liquidityIdPCache.get(instanceId);
-    if (!liquidityIdP) {
-      liquidityIdP = getInstanceP(instanceId)
-        .then(({ publicAPI }) => E(publicAPI).getLiquidityIssuer().getBrand())
-        .then(liquidityBrand => E(registrar).register('autoswap-liquidity', liquidityBrand));
-      liquidityIdPCache.set(instanceId, liquidityIdP);
-    }
-    return liquidityIdP;
-  }
-
   function getPrice(instanceRegKey, extent0, brandRegKey0, _brandRegKey1) {
     const instanceP = getInstanceP(instanceRegKey);
     const brand0P = getRegistrarP(brandRegKey0);

@@ -87,7 +87,8 @@ export default function Provider({ children }) {
           brandRegKey0: inputPurse.brandRegKey,
           brandRegKey1: outputPurse.brandRegKey,
         },
-      }).then(messageHandler);
+      },
+      true).then(messageHandler);
     }
 
     if (inputPurse && outputPurse && freeVariable === 1 && outputAmount > 0) {

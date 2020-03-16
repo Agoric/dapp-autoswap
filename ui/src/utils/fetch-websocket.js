@@ -6,8 +6,8 @@ const { API_URL } = dappConstants;
 
 // === FETCH
 
-export async function doFetch(req, toBridge = false) {
-  return fetch(toBridge ? '/bridge' : '/vat', {
+export async function doFetch(req, toApi = false) {
+  return fetch(toApi ? '/api' : '/vat', {
     method: 'POST',
     body: JSON.stringify(req),
     headers: { 'Content-Type': 'application/json' },

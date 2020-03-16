@@ -122,7 +122,6 @@ export function createOffer(
       type: 'walletAddOffer',
       data: offerDesc,
     },
-    true,
   );
 
   return {
