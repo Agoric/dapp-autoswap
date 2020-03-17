@@ -86,7 +86,7 @@ export default harden(({ wallet, zoe, registrar }) => {
           getInvite(_publicAPI) {
             return invite;
           },
-          offerAccepted(_publicAPI) {
+          deposited(_publicAPI) {
             resolve({ instanceId });
           },
         },

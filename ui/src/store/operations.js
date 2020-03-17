@@ -86,7 +86,6 @@ export function createOffer(
     hooks: {
       publicAPI: {
         getInvite: ['makeInvite'], // E(publicAPI).makeInvite()
-        offerAccepted: undefined, // Could be E(publicAPI)...
       },
       seat: {
         performOffer: ['swap'], // E(seat).swap()
