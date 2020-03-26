@@ -70,14 +70,14 @@ export function createOffer(
   state,
   { instanceId, inputAmount, outputAmount, inputPurse, outputPurse },
 ) {
-  const offerDesc = {
+  const offer = {
     // JSONable ID for this offer.  Eventually this will be scoped to
     // the current site.
     id: Date.now(),
 
     // Contract-specific metadata.
     instanceRegKey: instanceId,
-    contractIssuerIndexToRole: ['TokenA', 'TokenB', 'Liquidity'],
+    contractIssuerIndexToKeyword: ['TokenA', 'TokenB', 'Liquidity'],
 
     // Format is:
     //   hooks[targetName][hookName] = [hookMethod, ...hookArgs].
@@ -92,9 +92,9 @@ export function createOffer(
       }
     },
 
-    offerRulesTemplate: {
-      offer: {
-        // Roles that end with '*' are "multiroles".  These names
+    proposalTemplate: {
+      give: {
+        // Roles that end with '*' are "multiwords".  These names
         // match a role with that prefix and this purse's brand.
         //
         // If there is no match (or ambiguity), the wallet offer
@@ -111,7 +111,7 @@ export function createOffer(
           extent: outputAmount,
         },
       },
-      exit: { onDemand: {} },
+      exit: { onDemand: null },
     },
   };
 
@@ -119,7 +119,7 @@ export function createOffer(
   doFetch(
     {
       type: 'walletAddOffer',
-      data: offerDesc,
+      data: offer,
     },
   );
 

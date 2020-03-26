@@ -1,5 +1,10 @@
+// GENERATED FROM contract/deploy.js
 export default {
-  "API_URL": "http://127.0.0.1:8000",
   "BRIDGE_URL": "http://127.0.0.1:8000",
-  "CONTRACT_ID": "unknownInstance_12345"
-}
+  "API_URL": "http://127.0.0.1:8000",
+  "CONTRACT_ID": "autoswap_9794",
+  "BRAND_REGKEYS": {
+    "TokenA": "moola_3467",
+    "TokenB": "simolean_2059"
+  }
+};

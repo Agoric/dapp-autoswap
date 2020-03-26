@@ -1,12 +1,14 @@
 import harden from '@agoric/harden';
+import makePromise from '@agoric/make-promise';
 
 // This initInstance function is specific to autoswap.
 //
 // Notably, it takes the first two purses of the wallet and
 // uses them to add liquidity.
+const CONTRACT_NAME = 'autoswap';
 export default harden(({ wallet, zoe, registrar }) => {
   return harden({
-    async initInstance(contractName, { source, moduleFormat }, now = Date.now()) {
+    async initInstance({ source, moduleFormat }, now = Date.now()) {
       const installationHandle = await zoe~.install(source, moduleFormat);
 
       // =====================
@@ -34,9 +36,13 @@ export default harden(({ wallet, zoe, registrar }) => {
       const [
         invite,
         inviteIssuer,
+        brandRegKey0,
+        brandRegKey1,
       ] = await Promise.all([
-        zoe~.makeInstance(installationHandle, { issuers: [issuer0, issuer1] }),
+        zoe~.makeInstance(installationHandle, { TokenA: issuer0, TokenB: issuer1 }),
         zoe~.getInviteIssuer(),
+        wallet~.getIssuerNames(issuer0)~.brandRegKey,
+        wallet~.getIssuerNames(issuer1)~.brandRegKey,
       ])
     
       // =====================
@@ -48,7 +54,7 @@ export default harden(({ wallet, zoe, registrar }) => {
       const {
         extent: [{ instanceHandle }],
       } = await inviteIssuer~.getAmountOf(invite);
-      const instanceId = await registrar~.register(contractName, instanceHandle);
+      const instanceId = await registrar~.register(CONTRACT_NAME, instanceHandle);
     
       const extent0 = 900;
       const extent1 = 500;
@@ -60,8 +66,8 @@ export default harden(({ wallet, zoe, registrar }) => {
         instanceRegKey: instanceId,
         contractIssuerIndexToRole: ['TokenA', 'TokenB', 'Liquidity'],
     
-        offerRulesTemplate: {
-          offer: {
+        proposalTemplate: {
+          give: {
             TokenA: {
               pursePetname: pursePetname0,
               extent: extent0,
@@ -71,16 +77,11 @@ export default harden(({ wallet, zoe, registrar }) => {
               extent: extent1,
             },
           },
-          exit: { onDemand: {} },
+          exit: { onDemand: null },
         },
       };
     
-      let resolve;
-      let reject;
-      const acceptedP = new Promise((res, rej) => {
-        resolve = res;
-        reject = rej;
-      });
+      const performed = makePromise();
       const hooks = harden({
         publicAPI: {
           getInvite(_publicAPI) {
@@ -92,17 +93,27 @@ export default harden(({ wallet, zoe, registrar }) => {
         },
         seat: {
           performOffer(seat) {
-            return seat~.addLiquidity().catch(e => reject(`Cannot add liquidity: ${e}`));
+            const p = seat~.addLiquidity();
+            p.then(performed.res, performed.rej);
+            return p;
           },
         },
       });
 
       // Use the wallet's offer system to finish the deployment.
-      const requestContext = { origin: 'autoswap deploy', date: now };
+      const requestContext = { origin: `${CONTRACT_NAME} deploy`, date: now };
       const id = await wallet~.addOffer(offerDesc, hooks, requestContext);
-      wallet~.acceptOffer(id);
+      wallet~.acceptOffer(id).catch(performed.rej);
 
-      return acceptedP;
+      return {
+        CONTRACT_NAME,
+        instanceId,
+        initP: performed.p,
+        brandRegKeys: {
+          TokenA: brandRegKey0,
+          TokenB: brandRegKey1,
+        }
+      };
     },
   });
 });

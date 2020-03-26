@@ -1,5 +1,5 @@
 // Generic Agoric Dapp contract deployment script
-// NOTE: YOUR CONTRACT-SPECIFIC INITIALIZATION is in install-*.js
+// NOTE: YOUR CONTRACT-SPECIFIC INITIALIZATION is in install-contract.js
 import fs from 'fs';
 
 // This javascript source file uses the "tildot" syntax (foo~.bar()) for
@@ -7,35 +7,44 @@ import fs from 'fs';
 // committee.
 // TODO: improve this comment. https://github.com/Agoric/agoric-sdk/issues/608
 
-const DAPP_NAME = "autoswap";
-
-export default async function deployContract(homeP, { bundleSource, pathResolve },
-  CONTRACT_NAME = DAPP_NAME) {
+export default async function deployContract(homeP, { bundleSource, pathResolve }) {
 
   const [
-    { source, moduleFormat },
+    installBundle,
     contractBundle,
   ] = await Promise.all([
-    bundleSource(pathResolve(`./install-${CONTRACT_NAME}.js`)),
-    bundleSource(pathResolve(`./${CONTRACT_NAME}.js`)),
+    bundleSource(pathResolve(`./install-contract.js`)),
+    bundleSource(pathResolve(`./contract.js`)),
   ]);
 
   const wallet = homeP~.wallet;
   const zoe = homeP~.zoe;
   const registrar = homeP~.registrar;
+  const timerService = homeP~.localTimerService;
 
-  const installerInstall = homeP~.spawner~.install(source, moduleFormat);
-  const installer = installerInstall~.spawn({ wallet, zoe, registrar });
+  const installerInstall = homeP~.spawner~.install(
+    installBundle.source,
+    installBundle.moduleFormat,
+  );
+  const installer = installerInstall~.spawn({ wallet, zoe, registrar, timerService });
 
-  const { instanceId } = await installer~.initInstance(CONTRACT_NAME, contractBundle, Date.now());
+  const { CONTRACT_NAME, instanceId, initP, brandRegKeys = {} } =
+    await installer~.initInstance(contractBundle, Date.now());
 
   console.log('- instance made', CONTRACT_NAME, '=>', instanceId);
+
+  try {
+    await initP;
+  } catch (e) {
+    console.error('cannot create initial offers', e);
+  }
 
   // Save the instanceId somewhere where the UI can find it.
   const dappConstants = {
     BRIDGE_URL: 'agoric-lookup:https://local.agoric.com?append=/bridge',
     API_URL: '/',
     CONTRACT_ID: instanceId,
+    BRAND_REGKEYS: brandRegKeys,
   };
   const dc = 'dappConstants.js';
   console.log('writing', dc);
@@ -44,10 +53,11 @@ export default async function deployContract(homeP, { bundleSource, pathResolve 
   // Now add URLs so that development functions without internet access.
   dappConstants.BRIDGE_URL = "http://127.0.0.1:8000";
   dappConstants.API_URL = "http://127.0.0.1:8000";
-  const envFile = pathResolve(`../ui/.env.local`);
-  console.log('writing', envFile);
-  const envContents = `\
-REACT_APP_DAPP_CONSTANTS_JSON='${JSON.stringify(dappConstants)}'
+  const defaultsFile = pathResolve(`../ui/src/utils/defaults.js`);
+  console.log('writing', defaultsFile);
+  const defaultsContents = `\
+// GENERATED FROM contract/deploy.js
+export default ${JSON.stringify(dappConstants, undefined, 2)};
 `;
-  await fs.promises.writeFile(envFile, envContents);
+  await fs.promises.writeFile(defaultsFile, defaultsContents);
 }

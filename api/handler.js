@@ -1,6 +1,6 @@
 import harden from '@agoric/harden';
 
-export default harden(({zoe, registrar, overrideInstanceId = undefined}, _inviteMaker) => {
+export default harden(({zoe, registrar, brands, brandRegKeys, overrideInstanceId = undefined}, _inviteMaker) => {
   // If we have an overrideInstanceId, use it to assert the correct value in the RPC.
   function coerceInstanceId(instanceId = undefined) {
     if (instanceId === undefined) {
@@ -11,6 +11,10 @@ export default harden(({zoe, registrar, overrideInstanceId = undefined}, _invite
     }
     throw TypeError(`instanceId ${JSON.stringify(instanceId)} must match ${JSON.stringify(overrideInstanceId)}`);
   }
+
+  const brandToKeyword = new Map();
+  Object.entries(brands).forEach(([keyword, brand]) =>
+    brandToKeyword.set(brand, keyword));
 
   const registrarPCache = new Map();
   function getRegistrarP(id) {
@@ -41,9 +45,9 @@ export default harden(({zoe, registrar, overrideInstanceId = undefined}, _invite
 
     return Promise.all([instanceP, brand0P]).then(
       ([{ publicAPI }, brand0]) => {
-
+        const keyword = brandToKeyword.get(brand0);
         const amount0 = { brand: brand0, extent: extent0 };
-        return E(publicAPI).getPrice(amount0)
+        return E(publicAPI).getPrice({ [keyword]: amount0 })
           .then(amount1 => amount1.extent);
       });
   }
@@ -51,7 +55,7 @@ export default harden(({zoe, registrar, overrideInstanceId = undefined}, _invite
   return harden({
     getCommandHandler() {
       return harden({
-        async processInbound(obj, _home) {
+        async onMessage(obj, _meta) {
           const { type, data } = obj;
           switch (type) {
             case 'autoswapGetPrice': {

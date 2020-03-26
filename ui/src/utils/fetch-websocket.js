@@ -25,7 +25,7 @@ let walletLoaded = false;
 const connectSubscriptions = new Set();
 const messageSubscriptions = new Set();
 function createSocket({ onConnect, onDisconnect, onMessage }, endpoint) {
-  if (endpoint === '/wallet-bridge') {
+  if (endpoint === '/private/wallet-bridge') {
     let ifr = document.getElementById(walletBridgeId);
     if (!ifr) {
       ifr = document.createElement('iframe');
@@ -49,8 +49,8 @@ function createSocket({ onConnect, onDisconnect, onMessage }, endpoint) {
           }
         }
       });
-      ifr.src = process.env.PUBLIC_URL + '/agoric-wallet.html';
     }
+    ifr.src = process.env.PUBLIC_URL + '/agoric-wallet.html';
     if (onMessage) {
       messageSubscriptions.add(onMessage);
     }
@@ -61,6 +61,7 @@ function createSocket({ onConnect, onDisconnect, onMessage }, endpoint) {
         ifr.contentWindow.postMessage(obj, window.origin);
       },
       close() {
+        walletLoaded = false;
         if (onConnect) {
           connectSubscriptions.delete(onConnect);
         }
@@ -70,6 +71,11 @@ function createSocket({ onConnect, onDisconnect, onMessage }, endpoint) {
         for (const sub of messageListeners.keys()) {
           messageSubscriptions.delete(sub);
         }
+        let ifr = document.getElementById(walletBridgeId);
+        if (ifr) {
+          ifr.src = '';
+        }
+    
         if (onDisconnect) {
           onDisconnect();
         }
@@ -124,19 +130,19 @@ function getActiveSocket(endpoint) {
   return endpointToSocket.get(endpoint);
 }
 
-export function activateWebSocket(socketListeners = {}, endpoint = '/wallet-bridge') {
+export function activateWebSocket(socketListeners = {}, endpoint = '/private/wallet-bridge') {
   if (getActiveSocket(endpoint)) return;
   createSocket(socketListeners, endpoint);
 }
 
-export function deactivateWebSocket(endpoint = '/wallet-bridge') {
+export function deactivateWebSocket(endpoint = '/private/wallet-bridge') {
   if (!getActiveSocket(endpoint)) return;
   closeSocket(endpoint);
 }
 
 // === FETCH
 
-export async function doFetch(req, endpoint = '/wallet-bridge') {
+export async function doFetch(req, endpoint = '/private/wallet-bridge') {
   // Use the socket directly.
   const socket = getActiveSocket(endpoint);
   if (!socket) {
