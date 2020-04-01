@@ -1,5 +1,11 @@
 // Agoric Dapp api deployment script
 
+// This javascript source file uses the "tildot" syntax (foo~.bar()) for
+// eventual sends.
+// https://agoric.com/documentation/ertp/guide/other-concepts.html
+//  Tildot is standards track with TC39, the JavaScript standards committee.
+// https://github.com/tc39/proposal-wavy-dot
+
 export default async function deployApi(homeP, { bundleSource, pathResolve }) {
   let overrideInstanceId;
   const dc = `${process.cwd()}/dappConstants.js`;
