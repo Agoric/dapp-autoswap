@@ -49,24 +49,22 @@ export default harden(({ registry, publicAPI, brandPs, keywords }, _inviteMaker)
         async onMessage(obj, _meta) {
           const { type, data } = obj;
           switch (type) {
-            case 'autoswapGetPrice': {
-              const { extent0, brandRegKey0, brandRegKey1 } = data;
-              const dehydratedAmountIn = { brand: brandRegKey0, extent: extent0 };
-              const dehydratedBrandOut = brandRegKey1;
+            case 'autoswapGetCurrentPrice': {
+              const { 
+                amountIn: dehydratedAmountIn,
+                brandOut: dehydratedBrandOut
+              } = data;
 
               // A dehydrated amount has the form: { brand:
               // brandRegKey, extent }
 
               // dehydratedBrandOut is a brandRegKey
-              // const { dehydratedAmountIn, dehydratedBrandOut } =
-              // data;
-              
               const [amountIn, brandOut] = await Promise.all([
                 hydrateAmount(dehydratedAmountIn), 
                 hydrateBrand(dehydratedBrandOut)
               ]);
               const extent = await getCurrentPrice(amountIn, brandOut);
-              return { type: 'autoswapGetPriceResponse', data: extent };
+              return { type: 'autoswapGetCurrentPriceResponse', data: extent };
             }
 
             default: {

@@ -16,8 +16,6 @@ import {
 import { reducer, createDefaultState } from '../store/reducer';
 import dappConstants from '../utils/constants';
 
-const { INSTANCE_REG_KEY } = dappConstants;
-
 export const ApplicationContext = createContext();
 
 export function useApplicationContext() {
@@ -69,7 +67,7 @@ export default function Provider({ children }) {
   const apiMessageHandler = useCallback((message) => {
     if (!message) return;
     const { type, data } = message;
-    if (type === 'autoswapGetPriceResponse') {
+    if (type === 'autoswapGetCurrentPriceResponse') {
       dispatch(changeAmount(data, 1 - freeVariable));
     }
   }, [freeVariable]);
@@ -95,12 +93,10 @@ export default function Provider({ children }) {
   useEffect(() => {
     if (inputPurse && outputPurse && freeVariable === 0 && inputAmount > 0) {
       doFetch({
-        type: 'autoswapGetPrice',
+        type: 'autoswapGetCurrentPrice',
         data: {
-          instanceId: INSTANCE_REG_KEY,
-          extent0: inputAmount,
-          brandRegKey0: inputPurse.brandRegKey,
-          brandRegKey1: outputPurse.brandRegKey,
+          amountIn: { brand: inputPurse.brandRegKey, extent: inputAmount },
+          brandOut: outputPurse.brandRegKey,
         },
       },
       '/api').then(apiMessageHandler);
@@ -108,12 +104,10 @@ export default function Provider({ children }) {
 
     if (inputPurse && outputPurse && freeVariable === 1 && outputAmount > 0) {
       doFetch({
-        type: 'autoswapGetPrice',
+        type: 'autoswapGetCurrentPrice',
         data: {
-          instanceId: INSTANCE_REG_KEY,
-          extent0: outputAmount,
-          brandRegKey0: outputPurse.brandRegKey,
-          brandRegKey1: inputPurse.brandRegKey,
+          amountIn: { brand: outputPurse.brandRegKey, extent: outputAmount },
+          brandOut: inputPurse.brandRegKey,
         },
       },
       '/api').then(apiMessageHandler);
