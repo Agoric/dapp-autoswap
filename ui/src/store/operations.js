@@ -85,11 +85,8 @@ export function createOffer(
     //   E(target)[hookMethod](...hookArgs)
     hooks: {
       publicAPI: {
-        getInvite: ['makeInvite'], // E(publicAPI).makeInvite()
+        getInvite: ['makeSwapInvite'], // E(publicAPI).makeSwapInvite()
       },
-      seat: {
-        performOffer: ['swap'], // E(seat).swap()
-      }
     },
 
     proposalTemplate: {

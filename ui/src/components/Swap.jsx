@@ -24,7 +24,7 @@ import {
 } from '../store/actions';
 import dappConstants from '../utils/constants';
 
-const { CONTRACT_ID } = dappConstants;
+const { INSTANCE_REG_KEY } = dappConstants;
 
 const useStyles = makeStyles(theme => ({
   paper: {
@@ -130,7 +130,7 @@ export default function Swap() {
   function handleSwap() {
     dispatch(
       createOffer(
-        CONTRACT_ID,
+        INSTANCE_REG_KEY,
         inputAmount,
         outputAmount,
         inputPurse,

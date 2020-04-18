@@ -16,7 +16,7 @@ import {
 import { reducer, createDefaultState } from '../store/reducer';
 import dappConstants from '../utils/constants';
 
-const { CONTRACT_ID } = dappConstants;
+const { INSTANCE_REG_KEY } = dappConstants;
 
 export const ApplicationContext = createContext();
 
@@ -97,7 +97,7 @@ export default function Provider({ children }) {
       doFetch({
         type: 'autoswapGetPrice',
         data: {
-          instanceId: CONTRACT_ID,
+          instanceId: INSTANCE_REG_KEY,
           extent0: inputAmount,
           brandRegKey0: inputPurse.brandRegKey,
           brandRegKey1: outputPurse.brandRegKey,
@@ -110,7 +110,7 @@ export default function Provider({ children }) {
       doFetch({
         type: 'autoswapGetPrice',
         data: {
-          instanceId: CONTRACT_ID,
+          instanceId: INSTANCE_REG_KEY,
           extent0: outputAmount,
           brandRegKey0: outputPurse.brandRegKey,
           brandRegKey1: inputPurse.brandRegKey,
