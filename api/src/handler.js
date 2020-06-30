@@ -1,12 +1,6 @@
 import harden from '@agoric/harden';
 
-export default harden(({ registry, publicAPI, brandPs, keywords }, _inviteMaker) => {
-
-  const brandToKeyword = new Map();
-  keywords.forEach(async (keyword, i) => {
-    const brand = await brandPs[i];
-    brandToKeyword.set(brand, keyword);
-  });
+export default harden(({ registry, publicAPI }, _inviteMaker) => {
    
   const cacheOfPromiseForValue = new Map();
   const getFromRegistry = registryKey => {
@@ -17,12 +11,6 @@ export default harden(({ registry, publicAPI, brandPs, keywords }, _inviteMaker)
       cacheOfPromiseForValue.set(registryKey, valueP);
     }
     return valueP;
-  }
-
-  const getCurrentPrice = (amountIn, _brandOut) => {
-    const keyword = brandToKeyword.get(amountIn.brand);
-    return E(publicAPI).getCurrentPrice({ [keyword]: amountIn })
-      .then(amount1 => amount1.extent);
   }
 
   // returns a promise
@@ -63,7 +51,7 @@ export default harden(({ registry, publicAPI, brandPs, keywords }, _inviteMaker)
                 hydrateAmount(dehydratedAmountIn), 
                 hydrateBrand(dehydratedBrandOut)
               ]);
-              const extent = await getCurrentPrice(amountIn, brandOut);
+              const { extent } = await E(publicAPI).getCurrentPrice(amountIn, brandOut);
               return { type: 'autoswapGetCurrentPriceResponse', data: extent };
             }
 

@@ -4,7 +4,6 @@
 import fs from 'fs';
 import dappConstants from '../ui/src/utils/constants';
 import { E } from '@agoric/eventual-send';
-import { makeGetInstanceHandle } from '@agoric/zoe/src/clientSupport';
 import makeAmountMath from '@agoric/ertp/src/amountMath';
 
 // deploy.js runs in an ephemeral Node.js outside of swingset. The
@@ -111,20 +110,9 @@ export default async function deployApi(referencesPromise, { bundleSource, pathR
   const simoleanAmountMath = await getLocalAmountMath(simoleanIssuer);
 
   const issuerKeywordRecord = { TokenA: moolaIssuer, TokenB: simoleanIssuer };
-  const addLiquidityInvite = await E(zoe).makeInstance(autoswapContractInstallationHandle, issuerKeywordRecord);
+  const { invite: addLiquidityInvite, instanceRecord: { publicAPI, handle: instanceHandle } } = await E(zoe).makeInstance(autoswapContractInstallationHandle, issuerKeywordRecord);
   console.log('- SUCCESS! contract instance is running on Zoe');
 
-  // Let's get the Zoe invite issuer to be able to inspect our invite further
-  const inviteIssuer = await E(zoe).getInviteIssuer();
-
-  // Use the helper function to get an instanceHandle from the invite.
-  // An instanceHandle is like an installationHandle in that it is a
-  // similar opaque identifier. In this case, though, it identifies a
-  // running contract instance, not code. 
-  const getInstanceHandle = makeGetInstanceHandle(inviteIssuer);
-  const instanceHandle = await getInstanceHandle(addLiquidityInvite);
-
-  const { publicAPI } = await E(zoe).getInstanceRecord(instanceHandle);
   const liquidityIssuer = await E(publicAPI).getLiquidityIssuer();
   const liquidityAmountMath = await getLocalAmountMath(liquidityIssuer);
 
@@ -168,14 +156,7 @@ export default async function deployApi(referencesPromise, { bundleSource, pathR
   const bundle = await bundleSource(pathResolve('./src/handler.js'));
   const handlerInstall = E(spawner).install(bundle);
 
-  const brandPs = [];
-  const keywords = [];
-  Object.entries(issuerKeywordRecord).map(async ([keyword, issuer]) => {
-    keywords.push(keyword);
-    brandPs.push(E(issuer).getBrand());
-  });
-
-  const handler = E(handlerInstall).spawn({ registry, brandPs, keywords, publicAPI });
+  const handler = E(handlerInstall).spawn({ registry, publicAPI });
 
   await E(http).registerAPIHandler(handler);
 
