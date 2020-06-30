@@ -77,7 +77,6 @@ export function createOffer(
 
     // Contract-specific metadata.
     instanceRegKey: instanceId,
-    contractIssuerIndexToKeyword: ['TokenA', 'TokenB', 'Liquidity'],
 
     // Format is:
     //   hooks[targetName][hookName] = [hookMethod, ...hookArgs].
@@ -91,19 +90,14 @@ export function createOffer(
 
     proposalTemplate: {
       give: {
-        // Roles that end with '*' are "multiwords".  These names
-        // match a role with that prefix and this purse's brand.
-        //
-        // If there is no match (or ambiguity), the wallet offer
-        // compiler will throw with an informative message.
-        'Token*': {
+        In: {
           // The pursePetname identifies which purse we want to use
           pursePetname: inputPurse.pursePetname,
           extent: inputAmount,
         },
       },
       want: {
-        'Token*': {
+        Out: {
           pursePetname: outputPurse.pursePetname,
           extent: outputAmount,
         },
@@ -113,12 +107,10 @@ export function createOffer(
   };
 
   // Actually make the offer.
-  doFetch(
-    {
-      type: 'walletAddOffer',
-      data: offer,
-    },
-  );
+  doFetch({
+    type: 'walletAddOffer',
+    data: offer,
+  });
 
   return {
     ...state,
