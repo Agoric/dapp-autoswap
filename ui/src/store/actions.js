@@ -47,14 +47,22 @@ export const changeAmount = (amount, fieldNumber, freeVariable) => ({
 });
 
 export const createOffer = (
-  instanceId,
+  instanceHandleBoardId,
+  installationHandleBoardId,
   inputAmount,
   outputAmount,
   inputPurse,
   outputPurse,
 ) => ({
   type: CREATE_OFFER,
-  payload: { instanceId, inputAmount, outputAmount, inputPurse, outputPurse },
+  payload: {
+    instanceHandleBoardId,
+    installationHandleBoardId,
+    inputAmount,
+    outputAmount,
+    inputPurse,
+    outputPurse,
+  },
 });
 
 export const resetState = () => ({

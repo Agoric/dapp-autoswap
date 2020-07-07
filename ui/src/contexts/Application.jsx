@@ -95,8 +95,8 @@ export default function Provider({ children }) {
       doFetch({
         type: 'autoswapGetCurrentPrice',
         data: {
-          amountIn: { brand: inputPurse.brandRegKey, extent: inputAmount },
-          brandOut: outputPurse.brandRegKey,
+          amountIn: { brand: inputPurse.brandBoardId, extent: inputAmount },
+          brandOut: outputPurse.brandBoardId,
         },
       },
       '/api').then(apiMessageHandler);
@@ -106,8 +106,8 @@ export default function Provider({ children }) {
       doFetch({
         type: 'autoswapGetCurrentPrice',
         data: {
-          amountIn: { brand: outputPurse.brandRegKey, extent: outputAmount },
-          brandOut: inputPurse.brandRegKey,
+          amountIn: { brand: outputPurse.brandBoardId, extent: outputAmount },
+          brandOut: inputPurse.brandBoardId,
         },
       },
       '/api').then(apiMessageHandler);

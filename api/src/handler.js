@@ -1,20 +1,20 @@
 import harden from '@agoric/harden';
 
-export default harden(({ registry, publicAPI }, _inviteMaker) => {
+export default harden(({ board, publicAPI }, _inviteMaker) => {
    
   const cacheOfPromiseForValue = new Map();
-  const getFromRegistry = registryKey => {
-    let valueP = cacheOfPromiseForValue.get(registryKey);
+  const getFromBoard = boardId => {
+    let valueP = cacheOfPromiseForValue.get(boardId);
     if (!valueP) {
-      // Cache miss, so try the registry.
-      valueP = E(registry).get(registryKey);
-      cacheOfPromiseForValue.set(registryKey, valueP);
+      // Cache miss, so try the board.
+      valueP = E(board).get(boardId);
+      cacheOfPromiseForValue.set(boardId, valueP);
     }
     return valueP;
   }
 
   // returns a promise
-  const hydrateBrand = dehydratedBrand => getFromRegistry(dehydratedBrand);
+  const hydrateBrand = dehydratedBrand => getFromBoard(dehydratedBrand);
   
   // returns a promise
   const hydrateAmount = dehydratedAmount => {
@@ -44,9 +44,9 @@ export default harden(({ registry, publicAPI }, _inviteMaker) => {
               } = data;
 
               // A dehydrated amount has the form: { brand:
-              // brandRegKey, extent }
+              // brandBoardId, extent }
 
-              // dehydratedBrandOut is a brandRegKey
+              // dehydratedBrandOut is a brandBoardId
               const [amountIn, brandOut] = await Promise.all([
                 hydrateAmount(dehydratedAmountIn), 
                 hydrateBrand(dehydratedBrandOut)

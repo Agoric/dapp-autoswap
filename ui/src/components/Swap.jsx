@@ -24,7 +24,10 @@ import {
 } from '../store/actions';
 import dappConstants from '../utils/constants';
 
-const { INSTANCE_REG_KEY } = dappConstants;
+const {
+  INSTANCE_HANDLE_BOARD_ID,
+  INSTALLATION_HANDLE_BOARD_ID,
+} = dappConstants;
 
 const useStyles = makeStyles(theme => ({
   paper: {
@@ -67,10 +70,10 @@ export default function Swap() {
   } = state;
 
   // const purses = [
-  //   { name: 'Marketing', extent: 230, issuerPetname: 'simolean' },
-  //   { name: 'Operating Account', extent: 194, issuerPetname: 'moola ' },
-  //   { name: 'Savings', extent: 3500, issuerPetname: 'moola ' },
-  //   { name: 'Concert Tickets', extent: 64, issuerPetname: 'tickets' },
+  //   { name: 'Marketing', extent: 230, brandPetname: 'simolean' },
+  //   { name: 'Operating Account', extent: 194, brandPetname: 'moola ' },
+  //   { name: 'Savings', extent: 3500, brandPetname: 'moola ' },
+  //   { name: 'Concert Tickets', extent: 64, brandPetname: 'tickets' },
   // ];
 
   const inputAmountError =
@@ -80,7 +83,7 @@ export default function Swap() {
   const pursesError =
     inputPurse &&
     outputPurse &&
-    inputPurse.issuerPetname === outputPurse.issuerPetname;
+    inputPurse.brandPetname === outputPurse.brandPetname;
 
   const hasError = pursesError || inputAmountError || outputAmountError;
 
@@ -122,7 +125,7 @@ export default function Swap() {
   function getExchangeRate(decimal) {
     if (isValid) {
       const exchangeRate = (outputAmount / inputAmount).toFixed(decimal);
-      return `Exchange rate: 1 ${inputPurse.issuerPetname} = ${exchangeRate} ${outputPurse.issuerPetname}`;
+      return `Exchange rate: 1 ${inputPurse.brandPetname} = ${exchangeRate} ${outputPurse.brandPetname}`;
     }
     return '';
   }
@@ -130,7 +133,8 @@ export default function Swap() {
   function handleSwap() {
     dispatch(
       createOffer(
-        INSTANCE_REG_KEY,
+        INSTANCE_HANDLE_BOARD_ID,
+        INSTALLATION_HANDLE_BOARD_ID,
         inputAmount,
         outputAmount,
         inputPurse,
