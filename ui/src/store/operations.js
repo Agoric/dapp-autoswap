@@ -71,6 +71,7 @@ export function createOffer(
   {
     instanceHandleBoardId,
     installationHandleBoardId,
+    inviteDepositId,
     inputAmount,
     outputAmount,
     inputPurse,
@@ -105,11 +106,18 @@ export function createOffer(
     },
   };
 
-  // Actually make the offer.
-  doFetch({
-    type: 'walletAddOffer',
-    data: offer,
-  });
+  // Create an invite for the offer and on response, send the proposed
+  // offer to the wallet.
+  doFetch(
+    {
+      type: 'autoswap/sendSwapInvite',
+      data: {
+        depositFacetId: inviteDepositId,
+        offer,
+      },
+    },
+    '/api',
+  );
 
   return {
     ...state,
@@ -118,6 +126,10 @@ export function createOffer(
     inputAmount: null,
     outputAmount: null,
   };
+}
+
+export function updateInviteDepositId(state, inviteDepositId) {
+  return { ...state, inviteDepositId };
 }
 
 export function resetState(state) {

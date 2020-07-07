@@ -1,13 +1,13 @@
 import harden from '@agoric/harden';
 
-export default harden(({ board, publicAPI }, _inviteMaker) => {
+export default harden(({ board, publicAPI, inviteIssuer }, _inviteMaker) => {
    
   const cacheOfPromiseForValue = new Map();
   const getFromBoard = boardId => {
     let valueP = cacheOfPromiseForValue.get(boardId);
     if (!valueP) {
       // Cache miss, so try the board.
-      valueP = E(board).get(boardId);
+      valueP = E(board).getValue(boardId);
       cacheOfPromiseForValue.set(boardId, valueP);
     }
     return valueP;
@@ -37,7 +37,7 @@ export default harden(({ board, publicAPI }, _inviteMaker) => {
         async onMessage(obj, _meta) {
           const { type, data } = obj;
           switch (type) {
-            case 'autoswapGetCurrentPrice': {
+            case 'autoswap/getCurrentPrice': {
               const { 
                 amountIn: dehydratedAmountIn,
                 brandOut: dehydratedBrandOut
@@ -52,7 +52,23 @@ export default harden(({ board, publicAPI }, _inviteMaker) => {
                 hydrateBrand(dehydratedBrandOut)
               ]);
               const { extent } = await E(publicAPI).getCurrentPrice(amountIn, brandOut);
-              return { type: 'autoswapGetCurrentPriceResponse', data: extent };
+              return { type: 'autoswap/getCurrentPriceResponse', data: extent };
+            }
+
+            case 'autoswap/sendSwapInvite': {
+              const { depositFacetId, offer } = obj.data;
+              const depositFacet = E(board).getValue(depositFacetId);
+              const invite = await E(publicAPI).makeSwapInvite();
+              const inviteAmount = await E(inviteIssuer).getAmountOf(invite);
+              const { extent: [{ handle }]} = inviteAmount;
+              const inviteHandleBoardId = await E(board).getId(handle);
+              const updatedOffer = { ...offer, inviteHandleBoardId };
+              E(depositFacet).receive(invite);
+              
+              return harden({
+                type: 'autoswap/sendSwapInviteResponse',
+                data: { offer: updatedOffer },
+              });
             }
 
             default: {

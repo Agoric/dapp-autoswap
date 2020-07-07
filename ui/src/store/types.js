@@ -14,3 +14,5 @@ export const SWAP_INPUTS = 'SWAP_INPUTS';
 export const CREATE_OFFER = 'CREATE_OFFER';
 
 export const RESET_STATE = 'RESET_STATE';
+
+export const UPDATE_INVITE_DEPOSIT_ID = 'UPDATE_INVITE_DEPOSIT_ID';

@@ -66,6 +66,7 @@ export default function Swap() {
     outputPurse = {},
     inputAmount,
     outputAmount,
+    inviteDepositId,
     connected,
   } = state;
 
@@ -135,6 +136,7 @@ export default function Swap() {
       createOffer(
         INSTANCE_HANDLE_BOARD_ID,
         INSTALLATION_HANDLE_BOARD_ID,
+        inviteDepositId,
         inputAmount,
         outputAmount,
         inputPurse,

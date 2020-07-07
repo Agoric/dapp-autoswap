@@ -154,13 +154,18 @@ export default async function deployApi(referencesPromise, { bundleSource, pathR
   const bundle = await bundleSource(pathResolve('./src/handler.js'));
   const handlerInstall = E(spawner).install(bundle);
 
-  const handler = E(handlerInstall).spawn({ board, publicAPI });
+  const inviteIssuer = await E(zoe).getInviteIssuer();
+  const inviteBrand = await E(inviteIssuer).getBrand();
+  const INVITE_BRAND_BOARD_ID = await E(board).getId(inviteBrand);
+
+  const handler = E(handlerInstall).spawn({ board, publicAPI, inviteIssuer });
 
   await E(http).registerAPIHandler(handler);
 
   // Re-save the constants somewhere where the UI and api can find it.
   const newDappConstants = {
     INSTANCE_HANDLE_BOARD_ID,
+    INVITE_BRAND_BOARD_ID,
     ...dappConstants,
   };
   const defaultsFile = pathResolve(`../ui/src/utils/defaults.js`);
