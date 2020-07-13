@@ -72,7 +72,7 @@ export default function Swap() {
 
   // const purses = [
   //   { name: 'Marketing', extent: 230, brandPetname: 'simolean' },
-  //   { name: 'Operating Account', extent: 194, brandPetname: 'moola ' },
+  //   { name: 'Operating Account', extent: 194, brandPetname: 'moola' },
   //   { name: 'Savings', extent: 3500, brandPetname: 'moola ' },
   //   { name: 'Concert Tickets', extent: 64, brandPetname: 'tickets' },
   // ];
