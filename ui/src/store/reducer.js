@@ -10,6 +10,7 @@ import {
   CHANGE_AMOUNT,
   CREATE_OFFER,
   RESET_STATE,
+  UPDATE_INVITE_DEPOSIT_ID,
 } from './types';
 import {
   activateConnection,
@@ -23,6 +24,7 @@ import {
   swapInputs,
   createOffer,
   resetState,
+  updateInviteDepositId,
 } from './operations';
 
 export function createDefaultState() {
@@ -36,6 +38,7 @@ export function createDefaultState() {
     inputAmount: null,
     outputAmount: null,
     freeVariable: null,
+    inviteDepositId: null,
   };
 }
 
@@ -69,6 +72,9 @@ export const reducer = (state, { type, payload }) => {
 
     case RESET_STATE:
       return resetState(state);
+
+    case UPDATE_INVITE_DEPOSIT_ID:
+      return updateInviteDepositId(state, payload);
 
     default:
       throw new TypeError(`Action not supported ${type}`);

@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useCallback, useReducer, useEffect } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useCallback,
+  useReducer,
+  useEffect,
+} from 'react';
 
 import {
   activateWebSocket,
@@ -7,6 +13,7 @@ import {
 } from '../utils/fetch-websocket';
 import {
   updatePurses,
+  updateInviteDepositId,
   serverConnected,
   serverDisconnected,
   deactivateConnection,
@@ -15,6 +22,8 @@ import {
 } from '../store/actions';
 import { reducer, createDefaultState } from '../store/reducer';
 import dappConstants from '../utils/constants';
+
+const { INVITE_BRAND_BOARD_ID } = dappConstants;
 
 export const ApplicationContext = createContext();
 
@@ -40,6 +49,8 @@ export default function Provider({ children }) {
       const { type, data } = message;
       if (type === 'walletUpdatePurses') {
         dispatch(updatePurses(JSON.parse(data)));
+      } else if (type === 'walletDepositFacetIdResponse') {
+        dispatch(updateInviteDepositId(data));
       }
     }
 
@@ -47,10 +58,19 @@ export default function Provider({ children }) {
       return doFetch({ type: 'walletGetPurses' }).then(messageHandler);
     }
 
+    function walletGetInviteDepositId() {
+      console.log('INVITE_BRAND_BOARD_ID', INVITE_BRAND_BOARD_ID);
+      return doFetch({
+        type: 'walletGetDepositFacetId',
+        brandBoardId: INVITE_BRAND_BOARD_ID,
+      });
+    }
+
     activateWebSocket({
       onConnect() {
         dispatch(serverConnected());
         walletGetPurses();
+        walletGetInviteDepositId();
       },
       onDisconnect() {
         dispatch(serverDisconnected());
@@ -64,27 +84,43 @@ export default function Provider({ children }) {
     return deactivateWebSocket;
   }, []);
 
-  const apiMessageHandler = useCallback((message) => {
-    if (!message) return;
-    const { type, data } = message;
-    if (type === 'autoswapGetCurrentPriceResponse') {
-      dispatch(changeAmount(data, 1 - freeVariable));
-    }
-  }, [freeVariable]);
+  const apiMessageHandler = useCallback(
+    message => {
+      if (!message) return;
+      const { type, data } = message;
+      if (type === 'autoswap/getCurrentPriceResponse') {
+        dispatch(changeAmount(data, 1 - freeVariable));
+      } else if (type === 'autoswap/sendSwapInviteResponse') {
+        // Once the invite has been sent to the user, we update the
+        // offer to include the inviteHandleBoardId. Then we make a
+        // request to the user's wallet to send the proposed offer for
+        // acceptance/rejection.
+        const { offer } = data;
+        doFetch({
+          type: 'walletAddOffer',
+          data: offer,
+        });
+      }
+    },
+    [freeVariable],
+  );
 
   useEffect(() => {
     if (active) {
-      activateWebSocket({
-        onConnect() {
-          console.log('connected to API');
+      activateWebSocket(
+        {
+          onConnect() {
+            console.log('connected to API');
+          },
+          onDisconnect() {
+            console.log('disconnected from API');
+          },
+          onMessage(message) {
+            apiMessageHandler(JSON.parse(message));
+          },
         },
-        onDisconnect() {
-          console.log('disconnected from API');
-        },
-        onMessage(message) {
-          apiMessageHandler(JSON.parse(message));
-        },
-      }, '/api');
+        '/api',
+      );
     } else {
       deactivateWebSocket('/api');
     }
@@ -92,27 +128,38 @@ export default function Provider({ children }) {
 
   useEffect(() => {
     if (inputPurse && outputPurse && freeVariable === 0 && inputAmount > 0) {
-      doFetch({
-        type: 'autoswapGetCurrentPrice',
-        data: {
-          amountIn: { brand: inputPurse.brandRegKey, extent: inputAmount },
-          brandOut: outputPurse.brandRegKey,
+      doFetch(
+        {
+          type: 'autoswap/getCurrentPrice',
+          data: {
+            amountIn: { brand: inputPurse.brandBoardId, extent: inputAmount },
+            brandOut: outputPurse.brandBoardId,
+          },
         },
-      },
-      '/api').then(apiMessageHandler);
+        '/api',
+      ).then(apiMessageHandler);
     }
 
     if (inputPurse && outputPurse && freeVariable === 1 && outputAmount > 0) {
-      doFetch({
-        type: 'autoswapGetCurrentPrice',
-        data: {
-          amountIn: { brand: outputPurse.brandRegKey, extent: outputAmount },
-          brandOut: inputPurse.brandRegKey,
+      doFetch(
+        {
+          type: 'autoswap/getCurrentPrice',
+          data: {
+            amountIn: { brand: outputPurse.brandBoardId, extent: outputAmount },
+            brandOut: inputPurse.brandBoardId,
+          },
         },
-      },
-      '/api').then(apiMessageHandler);
+        '/api',
+      ).then(apiMessageHandler);
     }
-  }, [inputPurse, outputPurse, inputAmount, outputAmount, apiMessageHandler, freeVariable]);
+  }, [
+    inputPurse,
+    outputPurse,
+    inputAmount,
+    outputAmount,
+    apiMessageHandler,
+    freeVariable,
+  ]);
 
   return (
     <ApplicationContext.Provider value={{ state, dispatch }}>

@@ -50,11 +50,14 @@ export default async function deployApi(referencesPromise, { bundleSource, pathR
     // everyone has access to the same Zoe.
     zoe, 
 
-    // The registry also lives on-chain, and is used to make private
-    // objects public to everyone else on-chain. These objects get
-    // assigned a unique string key. Given the key, other people can
-    // access the object through the registry
-    registry,
+    // The board is an on-chain object that is used to make private
+    // on-chain objects public to everyone else on-chain. These
+    // objects get assigned a unique string id. Given the id, other
+    // people can access the object through the board. Ids and values
+    // have a one-to-one bidirectional mapping. If a value is added a
+    // second time, the original id is just returned.
+    board,
+
 
     // The http request handler.
     // TODO: add more explanation
@@ -66,11 +69,11 @@ export default async function deployApi(referencesPromise, { bundleSource, pathR
 
   // To get the backend of our dapp up and running, first we need to
   // grab the installationHandle that our contract deploy script put
-  // in the public registry.
+  // in the public board.
   const { 
-    INSTALLATION_REG_KEY
+    INSTALLATION_HANDLE_BOARD_ID,
   } = dappConstants;
-  const autoswapContractInstallationHandle = await E(registry).get(INSTALLATION_REG_KEY);
+  const autoswapContractInstallationHandle = await E(board).getValue(INSTALLATION_HANDLE_BOARD_ID);
   
   // Second, we can use the installationHandle to create a new
   // instance of our contract code on Zoe. A contract instance is a running
@@ -88,9 +91,6 @@ export default async function deployApi(referencesPromise, { bundleSource, pathR
   // moolaIssuer and simoleanIssuer.
 
   // In our example, moola and simoleans are widely used tokens.
-  // Someone has already registered the moolaIssuer and the
-  // simolenIssuer in the registry. We could also get it from our
-  // wallet.
 
   // getIssuers returns an array, because we currently cannot
   // serialize maps. We can immediately create a map using the array,
@@ -145,24 +145,27 @@ export default async function deployApi(referencesPromise, { bundleSource, pathR
   console.log(await outcome);
 
   // Now that we've done all the admin work, let's share this
-  // instanceHandle by adding it to the registry. Any users of our
-  // contract will use this instanceHandle to get invites to the
-  // contract in order to make an offer.
-  const INSTANCE_REG_KEY = await E(registry).register(`${dappConstants.CONTRACT_NAME}instance`, instanceHandle);
+  // instanceHandle by adding it to the board.
+  const INSTANCE_HANDLE_BOARD_ID = await E(board).getId(instanceHandle);
 
   console.log(`-- Contract Name: ${dappConstants.CONTRACT_NAME}`);
-  console.log(`-- InstanceHandle Register Key: ${INSTANCE_REG_KEY}`);
+  console.log(`-- InstanceHandle Board Id: ${INSTANCE_HANDLE_BOARD_ID}`);
 
   const bundle = await bundleSource(pathResolve('./src/handler.js'));
   const handlerInstall = E(spawner).install(bundle);
 
-  const handler = E(handlerInstall).spawn({ registry, publicAPI });
+  const inviteIssuer = await E(zoe).getInviteIssuer();
+  const inviteBrand = await E(inviteIssuer).getBrand();
+  const INVITE_BRAND_BOARD_ID = await E(board).getId(inviteBrand);
+
+  const handler = E(handlerInstall).spawn({ board, publicAPI, inviteIssuer });
 
   await E(http).registerAPIHandler(handler);
 
   // Re-save the constants somewhere where the UI and api can find it.
   const newDappConstants = {
-    INSTANCE_REG_KEY,
+    INSTANCE_HANDLE_BOARD_ID,
+    INVITE_BRAND_BOARD_ID,
     ...dappConstants,
   };
   const defaultsFile = pathResolve(`../ui/src/utils/defaults.js`);

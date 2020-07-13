@@ -1,20 +1,20 @@
 import harden from '@agoric/harden';
 
-export default harden(({ registry, publicAPI }, _inviteMaker) => {
+export default harden(({ board, publicAPI, inviteIssuer }, _inviteMaker) => {
    
   const cacheOfPromiseForValue = new Map();
-  const getFromRegistry = registryKey => {
-    let valueP = cacheOfPromiseForValue.get(registryKey);
+  const getFromBoard = boardId => {
+    let valueP = cacheOfPromiseForValue.get(boardId);
     if (!valueP) {
-      // Cache miss, so try the registry.
-      valueP = E(registry).get(registryKey);
-      cacheOfPromiseForValue.set(registryKey, valueP);
+      // Cache miss, so try the board.
+      valueP = E(board).getValue(boardId);
+      cacheOfPromiseForValue.set(boardId, valueP);
     }
     return valueP;
   }
 
   // returns a promise
-  const hydrateBrand = dehydratedBrand => getFromRegistry(dehydratedBrand);
+  const hydrateBrand = dehydratedBrand => getFromBoard(dehydratedBrand);
   
   // returns a promise
   const hydrateAmount = dehydratedAmount => {
@@ -37,22 +37,38 @@ export default harden(({ registry, publicAPI }, _inviteMaker) => {
         async onMessage(obj, _meta) {
           const { type, data } = obj;
           switch (type) {
-            case 'autoswapGetCurrentPrice': {
+            case 'autoswap/getCurrentPrice': {
               const { 
                 amountIn: dehydratedAmountIn,
                 brandOut: dehydratedBrandOut
               } = data;
 
               // A dehydrated amount has the form: { brand:
-              // brandRegKey, extent }
+              // brandBoardId, extent }
 
-              // dehydratedBrandOut is a brandRegKey
+              // dehydratedBrandOut is a brandBoardId
               const [amountIn, brandOut] = await Promise.all([
                 hydrateAmount(dehydratedAmountIn), 
                 hydrateBrand(dehydratedBrandOut)
               ]);
               const { extent } = await E(publicAPI).getCurrentPrice(amountIn, brandOut);
-              return { type: 'autoswapGetCurrentPriceResponse', data: extent };
+              return { type: 'autoswap/getCurrentPriceResponse', data: extent };
+            }
+
+            case 'autoswap/sendSwapInvite': {
+              const { depositFacetId, offer } = obj.data;
+              const depositFacet = E(board).getValue(depositFacetId);
+              const invite = await E(publicAPI).makeSwapInvite();
+              const inviteAmount = await E(inviteIssuer).getAmountOf(invite);
+              const { extent: [{ handle }]} = inviteAmount;
+              const inviteHandleBoardId = await E(board).getId(handle);
+              const updatedOffer = { ...offer, inviteHandleBoardId };
+              E(depositFacet).receive(invite);
+              
+              return harden({
+                type: 'autoswap/sendSwapInviteResponse',
+                data: { offer: updatedOffer },
+              });
             }
 
             default: {

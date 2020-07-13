@@ -9,6 +9,7 @@ import {
   CHANGE_AMOUNT,
   CREATE_OFFER,
   RESET_STATE,
+  UPDATE_INVITE_DEPOSIT_ID,
 } from './types';
 
 export const activateConnection = () => ({
@@ -47,16 +48,31 @@ export const changeAmount = (amount, fieldNumber, freeVariable) => ({
 });
 
 export const createOffer = (
-  instanceId,
+  instanceHandleBoardId,
+  installationHandleBoardId,
+  inviteDepositId,
   inputAmount,
   outputAmount,
   inputPurse,
   outputPurse,
 ) => ({
   type: CREATE_OFFER,
-  payload: { instanceId, inputAmount, outputAmount, inputPurse, outputPurse },
+  payload: {
+    instanceHandleBoardId,
+    installationHandleBoardId,
+    inviteDepositId,
+    inputAmount,
+    outputAmount,
+    inputPurse,
+    outputPurse,
+  },
 });
 
 export const resetState = () => ({
   type: RESET_STATE,
+});
+
+export const updateInviteDepositId = boardId => ({
+  type: UPDATE_INVITE_DEPOSIT_ID,
+  payload: boardId,
 });

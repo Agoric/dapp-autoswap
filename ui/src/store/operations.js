@@ -68,25 +68,25 @@ export function swapInputs(state) {
 
 export function createOffer(
   state,
-  { instanceId, inputAmount, outputAmount, inputPurse, outputPurse },
+  {
+    instanceHandleBoardId,
+    installationHandleBoardId,
+    inviteDepositId,
+    inputAmount,
+    outputAmount,
+    inputPurse,
+    outputPurse,
+  },
 ) {
   const offer = {
     // JSONable ID for this offer.  Eventually this will be scoped to
     // the current site.
     id: Date.now(),
 
-    // Contract-specific metadata.
-    instanceRegKey: instanceId,
-
-    // Format is:
-    //   hooks[targetName][hookName] = [hookMethod, ...hookArgs].
-    // Then is called within the wallet as:
-    //   E(target)[hookMethod](...hookArgs)
-    hooks: {
-      publicAPI: {
-        getInvite: ['makeSwapInvite'], // E(publicAPI).makeSwapInvite()
-      },
-    },
+    // TODO: get this from the invite instead in the wallet. We
+    // don't want to trust the dapp on this.
+    instanceHandleBoardId,
+    installationHandleBoardId,
 
     proposalTemplate: {
       give: {
@@ -106,11 +106,18 @@ export function createOffer(
     },
   };
 
-  // Actually make the offer.
-  doFetch({
-    type: 'walletAddOffer',
-    data: offer,
-  });
+  // Create an invite for the offer and on response, send the proposed
+  // offer to the wallet.
+  doFetch(
+    {
+      type: 'autoswap/sendSwapInvite',
+      data: {
+        depositFacetId: inviteDepositId,
+        offer,
+      },
+    },
+    '/api',
+  );
 
   return {
     ...state,
@@ -119,6 +126,10 @@ export function createOffer(
     inputAmount: null,
     outputAmount: null,
   };
+}
+
+export function updateInviteDepositId(state, inviteDepositId) {
+  return { ...state, inviteDepositId };
 }
 
 export function resetState(state) {
