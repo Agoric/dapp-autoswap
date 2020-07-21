@@ -93,13 +93,13 @@ export function createOffer(
         In: {
           // The pursePetname identifies which purse we want to use
           pursePetname: inputPurse.pursePetname,
-          extent: inputAmount,
+          value: inputAmount,
         },
       },
       want: {
         Out: {
           pursePetname: outputPurse.pursePetname,
-          extent: outputAmount,
+          value: outputAmount,
         },
       },
       exit: { onDemand: null },

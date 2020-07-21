@@ -132,7 +132,7 @@ export default function Provider({ children }) {
         {
           type: 'autoswap/getCurrentPrice',
           data: {
-            amountIn: { brand: inputPurse.brandBoardId, extent: inputAmount },
+            amountIn: { brand: inputPurse.brandBoardId, value: inputAmount },
             brandOut: outputPurse.brandBoardId,
           },
         },
@@ -145,7 +145,7 @@ export default function Provider({ children }) {
         {
           type: 'autoswap/getCurrentPrice',
           data: {
-            amountIn: { brand: outputPurse.brandBoardId, extent: outputAmount },
+            amountIn: { brand: outputPurse.brandBoardId, value: outputAmount },
             brandOut: inputPurse.brandBoardId,
           },
         },
