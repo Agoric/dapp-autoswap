@@ -21,7 +21,7 @@ export default harden(({ board, publicAPI, inviteIssuer }, _inviteMaker) => {
     return hydrateBrand(dehydratedAmount.brand).then(brand => {
       return {
         brand,
-        extent: dehydratedAmount.extent,
+        value: dehydratedAmount.value,
       };
     })
   };
@@ -44,15 +44,15 @@ export default harden(({ board, publicAPI, inviteIssuer }, _inviteMaker) => {
               } = data;
 
               // A dehydrated amount has the form: { brand:
-              // brandBoardId, extent }
+              // brandBoardId, value }
 
               // dehydratedBrandOut is a brandBoardId
               const [amountIn, brandOut] = await Promise.all([
                 hydrateAmount(dehydratedAmountIn), 
                 hydrateBrand(dehydratedBrandOut)
               ]);
-              const { extent } = await E(publicAPI).getCurrentPrice(amountIn, brandOut);
-              return { type: 'autoswap/getCurrentPriceResponse', data: extent };
+              const { value } = await E(publicAPI).getCurrentPrice(amountIn, brandOut);
+              return { type: 'autoswap/getCurrentPriceResponse', data: value };
             }
 
             case 'autoswap/sendSwapInvite': {
@@ -60,7 +60,7 @@ export default harden(({ board, publicAPI, inviteIssuer }, _inviteMaker) => {
               const depositFacet = E(board).getValue(depositFacetId);
               const invite = await E(publicAPI).makeSwapInvite();
               const inviteAmount = await E(inviteIssuer).getAmountOf(invite);
-              const { extent: [{ handle }]} = inviteAmount;
+              const { value: [{ handle }]} = inviteAmount;
               const inviteHandleBoardId = await E(board).getId(handle);
               const updatedOffer = { ...offer, inviteHandleBoardId };
               E(depositFacet).receive(invite);
