@@ -13,7 +13,7 @@ import {
 } from '../utils/fetch-websocket';
 import {
   updatePurses,
-  updateInviteDepositId,
+  updateInvitationDepositId,
   serverConnected,
   serverDisconnected,
   deactivateConnection,
@@ -23,7 +23,7 @@ import {
 import { reducer, createDefaultState } from '../store/reducer';
 import dappConstants from '../utils/constants';
 
-const { INVITE_BRAND_BOARD_ID } = dappConstants;
+const { INVITATION_BRAND_BOARD_ID, INSTALLATION_BOARD_ID, INSTANCE_BOARD_ID } = dappConstants;
 
 export const ApplicationContext = createContext();
 
@@ -50,7 +50,7 @@ export default function Provider({ children }) {
       if (type === 'walletUpdatePurses') {
         dispatch(updatePurses(JSON.parse(data)));
       } else if (type === 'walletDepositFacetIdResponse') {
-        dispatch(updateInviteDepositId(data));
+        dispatch(updateInvitationDepositId(data));
       }
     }
 
@@ -58,11 +58,28 @@ export default function Provider({ children }) {
       return doFetch({ type: 'walletGetPurses' }).then(messageHandler);
     }
 
-    function walletGetInviteDepositId() {
-      console.log('INVITE_BRAND_BOARD_ID', INVITE_BRAND_BOARD_ID);
+    function walletGetInvitationDepositId() {
       return doFetch({
         type: 'walletGetDepositFacetId',
-        brandBoardId: INVITE_BRAND_BOARD_ID,
+        brandBoardId: INVITATION_BRAND_BOARD_ID,
+      });
+    }
+
+    function walletSuggestInstallation() {
+      console.log('Installation', INSTALLATION_BOARD_ID);
+      return doFetch({
+        type: 'walletSuggestInstallation',
+        petname: 'Installation',
+        boardId: INSTALLATION_BOARD_ID,
+      });
+    }
+
+    function walletSuggestInstance() {
+      console.log('Instance', INSTANCE_BOARD_ID);
+      return doFetch({
+        type: 'walletSuggestInstance',
+        petname: 'Instance',
+        boardId: INSTANCE_BOARD_ID,
       });
     }
 
@@ -70,7 +87,9 @@ export default function Provider({ children }) {
       onConnect() {
         dispatch(serverConnected());
         walletGetPurses();
-        walletGetInviteDepositId();
+        walletGetInvitationDepositId();
+        walletSuggestInstallation();
+        walletSuggestInstance();
       },
       onDisconnect() {
         dispatch(serverDisconnected());
@@ -88,11 +107,11 @@ export default function Provider({ children }) {
     message => {
       if (!message) return;
       const { type, data } = message;
-      if (type === 'autoswap/getCurrentPriceResponse') {
+      if (type === 'autoswap/getInputPriceResponse') {
         dispatch(changeAmount(data, 1 - freeVariable));
-      } else if (type === 'autoswap/sendSwapInviteResponse') {
-        // Once the invite has been sent to the user, we update the
-        // offer to include the inviteHandleBoardId. Then we make a
+      } else if (type === 'autoswap/sendSwapInvitationResponse') {
+        // Once the invitation has been sent to the user, we update the
+        // offer to include the invitationHandleBoardId. Then we make a
         // request to the user's wallet to send the proposed offer for
         // acceptance/rejection.
         const { offer } = data;
@@ -130,7 +149,7 @@ export default function Provider({ children }) {
     if (inputPurse && outputPurse && freeVariable === 0 && inputAmount > 0) {
       doFetch(
         {
-          type: 'autoswap/getCurrentPrice',
+          type: 'autoswap/getInputPrice',
           data: {
             amountIn: { brand: inputPurse.brandBoardId, value: inputAmount },
             brandOut: outputPurse.brandBoardId,
@@ -143,7 +162,7 @@ export default function Provider({ children }) {
     if (inputPurse && outputPurse && freeVariable === 1 && outputAmount > 0) {
       doFetch(
         {
-          type: 'autoswap/getCurrentPrice',
+          type: 'autoswap/getInputPrice',
           data: {
             amountIn: { brand: outputPurse.brandBoardId, value: outputAmount },
             brandOut: inputPurse.brandBoardId,

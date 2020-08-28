@@ -48,32 +48,32 @@ export default async function deployContract(referencesPromise, { bundleSource, 
   }  = references;
 
   // First, we must bundle up our contract code (./src/contract.js)
-  // and install it on Zoe. This returns an installationHandle, an
+  // and install it on Zoe. This returns an installation, an
   // opaque, unforgeable identifier for our contract code that we can
   // reuse again and again to create new, live contract instances.
   const bundle = await bundleSource(pathResolve(`./src/contract.js`));
-  const installationHandle = await E(zoe).install(bundle);
+  const installation = await E(zoe).install(bundle);
   
-  // Let's share this installationHandle with other people, so that
+  // Let's share this installation with other people, so that
   // they can run our Autoswap contract code by making a contract
   // instance (see the api deploy script in this repo to see an
-  // example of how to use the installationHandle to make a new contract
+  // example of how to use the installation to make a new contract
   // instance.)
   
-  // To share the installationHandle, we're going to put it in the
+  // To share the installation, we're going to put it in the
   // board. The board is a shared, on-chain object that maps
   // strings to objects.
   const CONTRACT_NAME = 'autoswap';
-  const INSTALLATION_HANDLE_BOARD_ID = await E(board).getId(installationHandle);
+  const INSTALLATION_BOARD_ID = await E(board).getId(installation);
   console.log('- SUCCESS! contract code installed on Zoe');
   console.log(`-- Contract Name: ${CONTRACT_NAME}`);
-  console.log(`-- InstallationHandle Board Id: ${INSTALLATION_HANDLE_BOARD_ID}`);
+  console.log(`-- Installation Board Id: ${INSTALLATION_BOARD_ID}`);
   
-  // Save the instanceHandleBoardId somewhere where the UI can find it.
+  // Save the installationBoardId somewhere where the UI can find it.
   const dappConstants = {
     BRIDGE_URL: 'agoric-lookup:https://local.agoric.com?append=/bridge',
     API_URL: '/',
-    INSTALLATION_HANDLE_BOARD_ID,
+    INSTALLATION_BOARD_ID,
     CONTRACT_NAME,
   };
   const dc = 'dappConstants.js';

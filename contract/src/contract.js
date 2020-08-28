@@ -1,1 +1,1 @@
-export { makeContract } from '@agoric/zoe/src/contracts/autoswap';
+export { start } from '@agoric/zoe/src/contracts/autoswap';

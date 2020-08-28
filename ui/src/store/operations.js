@@ -71,7 +71,7 @@ export function createOffer(
   {
     instanceHandleBoardId,
     installationHandleBoardId,
-    inviteDepositId,
+    invitationDepositId,
     inputAmount,
     outputAmount,
     inputPurse,
@@ -83,7 +83,7 @@ export function createOffer(
     // the current site.
     id: Date.now(),
 
-    // TODO: get this from the invite instead in the wallet. We
+    // TODO: get this from the invitation instead in the wallet. We
     // don't want to trust the dapp on this.
     instanceHandleBoardId,
     installationHandleBoardId,
@@ -106,13 +106,13 @@ export function createOffer(
     },
   };
 
-  // Create an invite for the offer and on response, send the proposed
+  // Create an invitation for the offer and on response, send the proposed
   // offer to the wallet.
   doFetch(
     {
-      type: 'autoswap/sendSwapInvite',
+      type: 'autoswap/sendSwapInvitation',
       data: {
-        depositFacetId: inviteDepositId,
+        depositFacetId: invitationDepositId,
         offer,
       },
     },
@@ -128,8 +128,8 @@ export function createOffer(
   };
 }
 
-export function updateInviteDepositId(state, inviteDepositId) {
-  return { ...state, inviteDepositId };
+export function updateInvitationDepositId(state, invitationDepositId) {
+  return { ...state, invitationDepositId };
 }
 
 export function resetState(state) {

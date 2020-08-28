@@ -25,10 +25,10 @@
     "tape-promise": "^4.0.0"
   },
   "dependencies": {
-    "@agoric/ertp": "^0.3.1",
+    "@agoric/ertp": "*",
     "@agoric/harden": "0.0.4",
     "@agoric/nat": "^2.0.1",
-    "@agoric/zoe": "^0.3.0",
+    "@agoric/zoe": "*",
     "esm": "^3.2.5"
   },
   "keywords": [],
