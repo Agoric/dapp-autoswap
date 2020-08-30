@@ -25,8 +25,8 @@ import {
 import dappConstants from '../utils/constants';
 
 const {
-  INSTANCE_HANDLE_BOARD_ID,
-  INSTALLATION_HANDLE_BOARD_ID,
+  INSTANCE_BOARD_ID,
+  INSTALLATION_BOARD_ID,
 } = dappConstants;
 
 const useStyles = makeStyles(theme => ({
@@ -66,7 +66,7 @@ export default function Swap() {
     outputPurse = {},
     inputAmount,
     outputAmount,
-    inviteDepositId,
+    invitationDepositId,
     connected,
   } = state;
 
@@ -134,9 +134,9 @@ export default function Swap() {
   function handleSwap() {
     dispatch(
       createOffer(
-        INSTANCE_HANDLE_BOARD_ID,
-        INSTALLATION_HANDLE_BOARD_ID,
-        inviteDepositId,
+        INSTANCE_BOARD_ID,
+        INSTALLATION_BOARD_ID,
+        invitationDepositId,
         inputAmount,
         outputAmount,
         inputPurse,

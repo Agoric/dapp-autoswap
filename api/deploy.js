@@ -4,7 +4,7 @@
 import fs from 'fs';
 import dappConstants from '../ui/src/utils/constants';
 import { E } from '@agoric/eventual-send';
-import makeAmountMath from '@agoric/ertp/src/amountMath';
+import { makeLocalAmountMath } from '@agoric/ertp';
 
 // deploy.js runs in an ephemeral Node.js outside of swingset. The
 // spawner runs within ag-solo, so is persistent.  Once the deploy.js
@@ -68,18 +68,18 @@ export default async function deployApi(referencesPromise, { bundleSource, pathR
 
 
   // To get the backend of our dapp up and running, first we need to
-  // grab the installationHandle that our contract deploy script put
+  // grab the installation that our contract deploy script put
   // in the public board.
   const { 
-    INSTALLATION_HANDLE_BOARD_ID,
+    INSTALLATION_BOARD_ID,
   } = dappConstants;
-  const autoswapContractInstallationHandle = await E(board).getValue(INSTALLATION_HANDLE_BOARD_ID);
+  const autoswapInstallation = await E(board).getValue(INSTALLATION_BOARD_ID);
   
-  // Second, we can use the installationHandle to create a new
+  // Second, we can use the installation to create a new
   // instance of our contract code on Zoe. A contract instance is a running
   // program that can take offers through Zoe. Creating a contract
-  // instance gives you an invite to the contract. In this case, it is
-  // an invite to add liquidity to the liquidity pool.
+  // instance gives you an invitation to the contract. In this case, it is
+  // an invitation to add liquidity to the liquidity pool.
 
   // At the time that we make the contract instance, we need to tell
   // Zoe what kind of token to accept as the two liquidity tokens. In
@@ -87,7 +87,7 @@ export default async function deployApi(referencesPromise, { bundleSource, pathR
   // wanted to accept other kinds of tokens, we could create other
   // instances.) We need to put this information in the form of a
   // keyword (a string that the contract determines, in this case,
-  // 'TokenA' and 'TokenB') plus the issuers for the token kinds, the
+  // 'Central' and 'Secondary') plus the issuers for the token kinds, the
   // moolaIssuer and simoleanIssuer.
 
   // In our example, moola and simoleans are widely used tokens.
@@ -99,29 +99,24 @@ export default async function deployApi(referencesPromise, { bundleSource, pathR
   const issuers = new Map(issuersArray);
   const moolaIssuer = issuers.get('moola');
   const simoleanIssuer = issuers.get('simolean');
-
-  const getLocalAmountMath = issuer =>
-    Promise.all([
-      E(issuer).getBrand(),
-      E(issuer).getMathHelpersName(),
-    ]).then(([brand, mathHelpersName]) => makeAmountMath(brand, mathHelpersName));
     
-  const moolaAmountMath = await getLocalAmountMath(moolaIssuer);
-  const simoleanAmountMath = await getLocalAmountMath(simoleanIssuer);
+  const moolaAmountMath = await makeLocalAmountMath(moolaIssuer);
+  const simoleanAmountMath = await makeLocalAmountMath(simoleanIssuer);
 
-  const issuerKeywordRecord = { TokenA: moolaIssuer, TokenB: simoleanIssuer };
-  const { invite: addLiquidityInvite, instanceRecord: { publicAPI, handle: instanceHandle } } = await E(zoe).makeInstance(autoswapContractInstallationHandle, issuerKeywordRecord);
+  const issuerKeywordRecord = { Central: moolaIssuer, Secondary: simoleanIssuer };
+  const { publicFacet, instance } = await E(zoe).startInstance(autoswapInstallation, issuerKeywordRecord);
   console.log('- SUCCESS! contract instance is running on Zoe');
 
-  const liquidityIssuer = await E(publicAPI).getLiquidityIssuer();
-  const liquidityAmountMath = await getLocalAmountMath(liquidityIssuer);
+  const liquidityIssuer = await E(publicFacet).getLiquidityIssuer();
+  const liquidityAmountMath = await makeLocalAmountMath(liquidityIssuer);
+  const addLiquidityInvitation = await E(publicFacet).makeAddLiquidityInvitation();
 
-  // Let's add liquidity using our wallet and the addLiquidityInvite
+  // Let's add liquidity using our wallet and the addLiquidityInvitation
   // we have.
   const proposal = {
     give: {
-      TokenA: moolaAmountMath.make(900),
-      TokenB: simoleanAmountMath.make(500),
+      Central: moolaAmountMath.make(900),
+      Secondary: simoleanAmountMath.make(500),
     },
     want: {
       Liquidity: liquidityAmountMath.getEmpty(),
@@ -134,38 +129,38 @@ export default async function deployApi(referencesPromise, { bundleSource, pathR
   const moolaPurse = purses.get('Fun budget');
   const simoleanPurse = purses.get('Nest egg');
 
-  const moolaPayment = await E(moolaPurse).withdraw(proposal.give.TokenA);
-  const simoleanPayment = await E(simoleanPurse).withdraw(proposal.give.TokenB);
+  const moolaPayment = await E(moolaPurse).withdraw(proposal.give.Central);
+  const simoleanPayment = await E(simoleanPurse).withdraw(proposal.give.Secondary);
   
   const payments = {
-    TokenA: moolaPayment,
-    TokenB: simoleanPayment,
+    Central: moolaPayment,
+    Secondary: simoleanPayment,
   };
-  const { outcome, payout } = await E(zoe).offer(addLiquidityInvite, proposal, payments);
-  console.log(await outcome);
+  const seat = await E(zoe).offer(addLiquidityInvitation, proposal, payments);
+  console.log(await E(seat).getOfferResult());
 
   // Now that we've done all the admin work, let's share this
-  // instanceHandle by adding it to the board.
-  const INSTANCE_HANDLE_BOARD_ID = await E(board).getId(instanceHandle);
+  // instance by adding it to the board.
+  const INSTANCE_BOARD_ID = await E(board).getId(instance);
 
   console.log(`-- Contract Name: ${dappConstants.CONTRACT_NAME}`);
-  console.log(`-- InstanceHandle Board Id: ${INSTANCE_HANDLE_BOARD_ID}`);
+  console.log(`-- Instance Board Id: ${INSTANCE_BOARD_ID}`);
 
   const bundle = await bundleSource(pathResolve('./src/handler.js'));
   const handlerInstall = E(spawner).install(bundle);
 
-  const inviteIssuer = await E(zoe).getInviteIssuer();
-  const inviteBrand = await E(inviteIssuer).getBrand();
-  const INVITE_BRAND_BOARD_ID = await E(board).getId(inviteBrand);
+  const invitationIssuer = await E(zoe).getInvitationIssuer();
+  const invitationBrand = await E(invitationIssuer).getBrand();
+  const INVITATION_BRAND_BOARD_ID = await E(board).getId(invitationBrand);
 
-  const handler = E(handlerInstall).spawn({ board, publicAPI, inviteIssuer });
+  const handler = E(handlerInstall).spawn({ board, publicFacet, invitationIssuer });
 
   await E(http).registerAPIHandler(handler);
 
   // Re-save the constants somewhere where the UI and api can find it.
   const newDappConstants = {
-    INSTANCE_HANDLE_BOARD_ID,
-    INVITE_BRAND_BOARD_ID,
+    INSTANCE_BOARD_ID,
+    INVITATION_BRAND_BOARD_ID,
     ...dappConstants,
   };
   const defaultsFile = pathResolve(`../ui/src/utils/defaults.js`);

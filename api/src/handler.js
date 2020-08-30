@@ -1,6 +1,7 @@
 import harden from '@agoric/harden';
+import { E } from '@agoric/eventual-send';
 
-export default harden(({ board, publicAPI, inviteIssuer }, _inviteMaker) => {
+export default harden(({ board, publicFacet, invitationIssuer }, _invitationMaker) => {
    
   const cacheOfPromiseForValue = new Map();
   const getFromBoard = boardId => {
@@ -37,7 +38,7 @@ export default harden(({ board, publicAPI, inviteIssuer }, _inviteMaker) => {
         async onMessage(obj, _meta) {
           const { type, data } = obj;
           switch (type) {
-            case 'autoswap/getCurrentPrice': {
+            case 'autoswap/getInputPrice': {
               const { 
                 amountIn: dehydratedAmountIn,
                 brandOut: dehydratedBrandOut
@@ -51,22 +52,26 @@ export default harden(({ board, publicAPI, inviteIssuer }, _inviteMaker) => {
                 hydrateAmount(dehydratedAmountIn), 
                 hydrateBrand(dehydratedBrandOut)
               ]);
-              const { value } = await E(publicAPI).getCurrentPrice(amountIn, brandOut);
-              return { type: 'autoswap/getCurrentPriceResponse', data: value };
+              const { value } = await E(publicFacet).getInputPrice(amountIn, brandOut);
+              return { type: 'autoswap/getInputPriceResponse', data: value };
             }
 
-            case 'autoswap/sendSwapInvite': {
+            case 'autoswap/sendSwapInvitation': {
               const { depositFacetId, offer } = obj.data;
               const depositFacet = E(board).getValue(depositFacetId);
-              const invite = await E(publicAPI).makeSwapInvite();
-              const inviteAmount = await E(inviteIssuer).getAmountOf(invite);
-              const { value: [{ handle }]} = inviteAmount;
-              const inviteHandleBoardId = await E(board).getId(handle);
-              const updatedOffer = { ...offer, inviteHandleBoardId };
-              E(depositFacet).receive(invite);
+              const invitation = await E(publicFacet).makeSwapInvitation();
+              const invitationAmount = await E(invitationIssuer).getAmountOf(invitation);
+              const { value: [{ handle }]} = invitationAmount;
+              const invitationHandleBoardId = await E(board).getId(handle);
+              const updatedOffer = { ...offer, invitationHandleBoardId };
+              // We need to wait for the invitation to be
+              // received, or we will possibly win the race of
+              // proposing the offer before the invitation is ready.
+              // TODO: We should make this process more robust.
+              await E(depositFacet).receive(invitation);
               
               return harden({
-                type: 'autoswap/sendSwapInviteResponse',
+                type: 'autoswap/sendSwapInvitationResponse',
                 data: { offer: updatedOffer },
               });
             }
