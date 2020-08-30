@@ -2,7 +2,7 @@
 
 import dappConstants from './constants';
 
-const { API_URL, BRIDGE_URL } = dappConstants;
+const { API_URL, BRIDGE_URL, CONTRACT_NAME } = dappConstants;
 
 // === WEB SOCKET
 
@@ -50,7 +50,16 @@ function createSocket({ onConnect, onDisconnect, onMessage }, endpoint) {
         }
       });
     }
-    ifr.src = process.env.PUBLIC_URL + '/agoric-wallet.html';
+    let ifrQ = [];
+    ifr.src = process.env.PUBLIC_URL + `/agoric-wallet.html?suggestedDappPetname=${encodeURIComponent(CONTRACT_NAME)}`;
+    ifr.addEventListener('load', () => {
+      while (ifrQ.length) {
+        const obj = ifrQ.shift();
+        console.log('sending', obj);
+        ifr.contentWindow.postMessage(obj, window.origin);
+      }
+      ifrQ = undefined;
+    });
     if (onMessage) {
       messageSubscriptions.add(onMessage);
     }
@@ -58,7 +67,12 @@ function createSocket({ onConnect, onDisconnect, onMessage }, endpoint) {
     endpointToSocket.set(endpoint, {
       send(msg) {
         const obj = JSON.parse(msg);
-        ifr.contentWindow.postMessage(obj, window.origin);
+        if (ifrQ) {
+          ifrQ.push(obj);
+        } else {
+          console.log('sending', obj);
+          ifr.contentWindow.postMessage(obj, window.origin);
+        }
       },
       close() {
         walletLoaded = false;
