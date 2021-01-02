@@ -16,12 +16,7 @@ import AssetInput from './AssetInput';
 import Steps from './Steps';
 
 import { useApplicationContext } from '../contexts/Application';
-import {
-  changePurse,
-  changeAmount,
-  swapInputs,
-  createOffer,
-} from '../store/actions';
+import { changePurse, changeAmount, swapInputs, createOffer } from '../store';
 import dappConstants from '../utils/constants';
 
 const { INSTANCE_BOARD_ID, INSTALLATION_BOARD_ID } = dappConstants;

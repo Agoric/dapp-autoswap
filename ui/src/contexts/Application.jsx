@@ -12,6 +12,8 @@ import {
   doFetch,
 } from '../utils/fetch-websocket';
 import {
+  reducer,
+  defaultState,
   updatePurses,
   updateInvitationDepositId,
   serverConnected,
@@ -19,8 +21,7 @@ import {
   deactivateConnection,
   changeAmount,
   resetState,
-} from '../store/actions';
-import { reducer, createDefaultState } from '../store/reducer';
+} from '../store';
 import dappConstants from '../utils/constants';
 
 const {
@@ -37,7 +38,7 @@ export function useApplicationContext() {
 
 /* eslint-disable complexity, react/prop-types */
 export default function Provider({ children }) {
-  const [state, dispatch] = useReducer(reducer, createDefaultState());
+  const [state, dispatch] = useReducer(reducer, defaultState);
   const {
     active,
     inputPurse,
