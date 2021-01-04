@@ -153,7 +153,7 @@ export default async function deployApi(referencesPromise, { bundleSource, pathR
   const invitationBrand = await E(invitationIssuer).getBrand();
   const INVITATION_BRAND_BOARD_ID = await E(board).getId(invitationBrand);
 
-  const handler = E(handlerInstall).spawn({ board, publicFacet, invitationIssuer });
+  const handler = E(handlerInstall).spawn({ board, http, publicFacet, invitationIssuer });
 
   await E(http).registerAPIHandler(handler);
 
