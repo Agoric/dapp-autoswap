@@ -23,7 +23,11 @@ import {
 import { reducer, createDefaultState } from '../store/reducer';
 import dappConstants from '../utils/constants';
 
-const { INVITATION_BRAND_BOARD_ID, INSTALLATION_BOARD_ID, INSTANCE_BOARD_ID } = dappConstants;
+const {
+  INVITATION_BRAND_BOARD_ID,
+  INSTALLATION_BOARD_ID,
+  INSTANCE_BOARD_ID,
+} = dappConstants;
 
 export const ApplicationContext = createContext();
 
