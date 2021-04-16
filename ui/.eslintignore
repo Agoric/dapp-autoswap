@@ -4,3 +4,4 @@ node_modules
 .cache
 src/utils/defaults.js
 dappConstants.js
+src/utils/constants.js
