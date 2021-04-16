@@ -13,12 +13,14 @@ import { E } from '@agoric/eventual-send';
  */
 
 /**
- * 
+ *
  * @param {*} referencesPromise
  * @param {DeployPowers} powers
  */
-export default async function deployContract(referencesPromise, { bundleSource, pathResolve }) {
-  
+export default async function deployContract(
+  referencesPromise,
+  { bundleSource, pathResolve },
+) {
   // Your off-chain machine (what we call an ag-solo) starts off with
   // a number of references, some of which are shared objects on chain, and
   // some of which are objects that only exist on your machine.
@@ -27,14 +29,13 @@ export default async function deployContract(referencesPromise, { bundleSource, 
   const references = await referencesPromise;
 
   // Unpack the references.
-  const { 
-
+  const {
     // *** ON-CHAIN REFERENCES ***
 
     // Zoe lives on-chain and is shared by everyone who has access to
     // the chain. In this demo, that's just you, but on our testnet,
     // everyone has access to the same Zoe.
-    zoe, 
+    zoe,
 
     // The board is an on-chain object that is used to make private
     // on-chain objects public to everyone else on-chain. These
@@ -43,9 +44,7 @@ export default async function deployContract(referencesPromise, { bundleSource, 
     // have a one-to-one bidirectional mapping. If a value is added a
     // second time, the original id is just returned.
     board,
-
-
-  }  = references;
+  } = references;
 
   // First, we must bundle up our contract code (./src/contract.js)
   // and install it on Zoe. This returns an installation, an
@@ -53,13 +52,13 @@ export default async function deployContract(referencesPromise, { bundleSource, 
   // reuse again and again to create new, live contract instances.
   const bundle = await bundleSource(pathResolve(`./src/contract.js`));
   const installation = await E(zoe).install(bundle);
-  
+
   // Let's share this installation with other people, so that
   // they can run our Autoswap contract code by making a contract
   // instance (see the api deploy script in this repo to see an
   // example of how to use the installation to make a new contract
   // instance.)
-  
+
   // To share the installation, we're going to put it in the
   // board. The board is a shared, on-chain object that maps
   // strings to objects.
@@ -68,7 +67,7 @@ export default async function deployContract(referencesPromise, { bundleSource, 
   console.log('- SUCCESS! contract code installed on Zoe');
   console.log(`-- Contract Name: ${CONTRACT_NAME}`);
   console.log(`-- Installation Board Id: ${INSTALLATION_BOARD_ID}`);
-  
+
   // Save the installationBoardId somewhere where the UI can find it.
   const dappConstants = {
     BRIDGE_URL: 'agoric-lookup:https://local.agoric.com?append=/bridge',
@@ -78,11 +77,18 @@ export default async function deployContract(referencesPromise, { bundleSource, 
   };
   const dc = 'dappConstants.js';
   console.log('writing', dc);
-  await fs.promises.writeFile(dc, `globalThis.__DAPP_CONSTANTS__ = ${JSON.stringify(dappConstants, undefined, 2)}`);
+  await fs.promises.writeFile(
+    dc,
+    `globalThis.__DAPP_CONSTANTS__ = ${JSON.stringify(
+      dappConstants,
+      undefined,
+      2,
+    )}`,
+  );
 
   // Now add URLs so that development functions without internet access.
-  dappConstants.BRIDGE_URL = "http://127.0.0.1:8000";
-  dappConstants.API_URL = "http://127.0.0.1:8000";
+  dappConstants.BRIDGE_URL = 'http://127.0.0.1:8000';
+  dappConstants.API_URL = 'http://127.0.0.1:8000';
   const defaultsFile = pathResolve(`../ui/src/utils/defaults.js`);
   console.log('writing', defaultsFile);
   const defaultsContents = `\

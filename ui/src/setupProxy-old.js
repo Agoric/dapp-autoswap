@@ -1,3 +1,4 @@
+/* global require __dirname module process */
 // Manual Proxy
 
 // Note: You do not need to import this file anywhere. It is automatically registered
